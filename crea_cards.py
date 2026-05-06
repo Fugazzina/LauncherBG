@@ -1,9 +1,9 @@
 import requests
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import os
-import textwrap
+import math
 
-# --- CONFIGURAZIONE (da GitHub Secrets) ---
+# --- CONFIGURAZIONE ---
 TRAKT_ID = os.getenv('TRAKT_ID')
 TMDB_KEY = os.getenv('TMDB_KEY')
 USER = os.getenv('TRAKT_USER')
@@ -13,23 +13,63 @@ FOLDER = "./sfondi_projectivity/"
 if not os.path.exists(FOLDER):
     os.makedirs(FOLDER)
 
-def get_font(size):
-    """Carica un font compatibile con Linux e Windows"""
-    font_paths = [
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",  # Linux (GitHub)
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",  # Linux alternativo
-        "C:/Windows/Fonts/arialbd.ttf",  # Windows
-        "C:/Windows/Fonts/arial.ttf",    # Windows fallback
+# --- FONT (scaricati durante il workflow) ---
+def get_font(size, bold=False):
+    font_paths_bold = [
+        "/tmp/fonts/Montserrat-Bold.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     ]
-    for path in font_paths:
+    font_paths_regular = [
+        "/tmp/fonts/Montserrat-Regular.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    ]
+    paths = font_paths_bold if bold else font_paths_regular
+    for path in paths:
         try:
             return ImageFont.truetype(path, size)
         except:
             continue
     return ImageFont.load_default()
 
+def download_fonts():
+    """Scarica Montserrat da Google Fonts"""
+    os.makedirs("/tmp/fonts", exist_ok=True)
+    fonts = {
+        "/tmp/fonts/Montserrat-Bold.ttf": "https://github.com/JulietaUla/Montserrat/raw/master/fonts/ttf/Montserrat-Bold.ttf",
+        "/tmp/fonts/Montserrat-Regular.ttf": "https://github.com/JulietaUla/Montserrat/raw/master/fonts/ttf/Montserrat-Regular.ttf",
+        "/tmp/fonts/Montserrat-Light.ttf": "https://github.com/JulietaUla/Montserrat/raw/master/fonts/ttf/Montserrat-Light.ttf",
+    }
+    for path, url in fonts.items():
+        if not os.path.exists(path):
+            try:
+                r = requests.get(url)
+                with open(path, 'wb') as f:
+                    f.write(r.content)
+                print(f"Font scaricato: {path}")
+            except Exception as e:
+                print(f"Errore download font: {e}")
+
+def get_font_montserrat(size, style="regular"):
+    paths = {
+        "bold": "/tmp/fonts/Montserrat-Bold.ttf",
+        "regular": "/tmp/fonts/Montserrat-Regular.ttf",
+        "light": "/tmp/fonts/Montserrat-Light.ttf",
+    }
+    fallbacks = [
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    ]
+    try:
+        return ImageFont.truetype(paths.get(style, paths["regular"]), size)
+    except:
+        for f in fallbacks:
+            try:
+                return ImageFont.truetype(f, size)
+            except:
+                continue
+    return ImageFont.load_default()
+
 def get_trakt_movies():
-    """Recupera le raccomandazioni con autenticazione OAuth"""
     url = "https://api.trakt.tv/recommendations/movies?limit=15"
     headers = {
         'Content-Type': 'application/json',
@@ -42,31 +82,25 @@ def get_trakt_movies():
     if response.status_code != 200:
         print(f"Errore Trakt: {response.text}")
         return []
-    
-    # Raccomandazioni: ogni item è direttamente il film
     return [{'movie': item} for item in response.json()]
 
 def get_tmdb_data(tmdb_id):
-    """Ottiene dettagli, loghi e voti da TMDB"""
     url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_KEY}&append_to_response=images&language=it-IT"
-    response = requests.get(url)
-    data = response.json()
-    # Se la descrizione è vuota in italiano, prende quella in inglese
+    data = requests.get(url).json()
     if not data.get('overview'):
         url_en = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_KEY}&append_to_response=images&language=en-US"
         data = requests.get(url_en).json()
     return data
 
 def wrap_text(text, font, max_width, draw):
-    """Divide il testo in righe che non escono dai bordi"""
     words = text.split()
     lines = []
     current_line = ""
     for word in words:
-        test_line = f"{current_line} {word}".strip()
-        bbox = draw.textbbox((0, 0), test_line, font=font)
+        test = f"{current_line} {word}".strip()
+        bbox = draw.textbbox((0, 0), test, font=font)
         if bbox[2] <= max_width:
-            current_line = test_line
+            current_line = test
         else:
             if current_line:
                 lines.append(current_line)
@@ -75,10 +109,21 @@ def wrap_text(text, font, max_width, draw):
         lines.append(current_line)
     return lines
 
-def create_card(data):
-    """Crea la grafica stile streaming"""
+def draw_imdb_badge(draw, x, y, score):
+    """Disegna il badge IMDb giallo stile Apple TV"""
+    font_imdb = get_font_montserrat(22, "bold")
+    font_score = get_font_montserrat(26, "bold")
 
-    # Controllo dati essenziali
+    # Badge giallo IMDb
+    badge_w, badge_h = 70, 34
+    draw.rounded_rectangle([x, y, x + badge_w, y + badge_h], radius=5, fill=(245, 197, 24))
+    draw.text((x + 8, y + 6), "IMDb", font=font_imdb, fill=(0, 0, 0))
+
+    # Voto bianco accanto
+    score_text = f"{score:.1f}"
+    draw.text((x + badge_w + 10, y + 4), score_text, font=font_score, fill=(255, 255, 255))
+
+def create_card(data):
     if not data.get('backdrop_path'):
         print(f"  → Nessun backdrop per '{data.get('title', 'N/A')}', salto.")
         return
@@ -86,88 +131,133 @@ def create_card(data):
         print(f"  → Film non trovato su TMDB, salto.")
         return
 
-    # 1. Scarica lo sfondo
+    # 1. Scarica backdrop
     bg_url = f"https://image.tmdb.org/t/p/original{data['backdrop_path']}"
-    response = requests.get(bg_url, stream=True)
-    img = Image.open(response.raw).convert("RGBA")
-    w, h = img.size
+    img = Image.open(requests.get(bg_url, stream=True).raw).convert("RGBA")
+    
+    # Forza risoluzione 1920x1080
+    img = img.resize((1920, 1080), Image.Resampling.LANCZOS)
+    w, h = 1920, 1080
 
-    # 2. Sfumatura nera a sinistra
+    # 2. Sfumatura sinistra stile Apple TV (nera, forte, fino al 55%)
     overlay = Image.new('RGBA', (w, h), (0, 0, 0, 0))
-    draw_overlay = ImageDraw.Draw(overlay)
-    gradient_width = int(w * 0.65)
-    for x in range(gradient_width):
-        alpha = int(220 * (1 - x / gradient_width))
-        draw_overlay.line([(x, 0), (x, h)], fill=(0, 0, 0, alpha))
+    draw_ov = ImageDraw.Draw(overlay)
+    
+    # Zona completamente nera (primi 20%)
+    solid_w = int(w * 0.20)
+    draw_ov.rectangle([0, 0, solid_w, h], fill=(0, 0, 0, 255))
+    
+    # Gradiente dal 20% al 60%
+    gradient_start = solid_w
+    gradient_end = int(w * 0.60)
+    for x in range(gradient_start, gradient_end):
+        progress = (x - gradient_start) / (gradient_end - gradient_start)
+        # Curva esponenziale per sfumatura più naturale
+        alpha = int(255 * (1 - progress) ** 1.5)
+        draw_ov.line([(x, 0), (x, h)], fill=(0, 0, 0, alpha))
+
     img = Image.alpha_composite(img, overlay)
     draw = ImageDraw.Draw(img)
 
-    # 3. Logo del film (PNG trasparente da TMDB)
+    # 3. Area testo — colonna sinistra
+    margin_left = 80
+    text_max_width = int(w * 0.42)
+
+    # Posizione verticale: partiamo da 15% dall'alto
+    y = int(h * 0.13)
+
+    # 4. Logo PNG ufficiale TMDB
     logos = []
     if data.get('images') and data['images'].get('logos'):
-        logos = [l for l in data['images']['logos'] if l.get('file_extension') == '.png' and l.get('iso_639_1') in ['it', 'en', None]]
+        # Preferisce logo italiano, poi inglese, poi qualsiasi
+        for lang in ['it', 'en', None]:
+            candidates = [l for l in data['images']['logos']
+                         if l.get('file_extension') == '.png'
+                         and (lang is None or l.get('iso_639_1') == lang)]
+            if candidates:
+                # Prende quello con vote_average più alto
+                logos = sorted(candidates, key=lambda x: x.get('vote_average', 0), reverse=True)
+                break
 
-    y_pos = int(h * 0.28)
-
+    logo_placed = False
     if logos:
         logo_url = f"https://image.tmdb.org/t/p/w500{logos[0]['file_path']}"
         try:
             logo = Image.open(requests.get(logo_url, stream=True).raw).convert("RGBA")
-            logo.thumbnail((600, 280), Image.Resampling.LANCZOS)
-            img.paste(logo, (100, y_pos), logo)
-            y_pos += logo.height + 25
-        except:
-            # Fallback testo se il logo non si carica
-            font_title = get_font(72)
-            draw.text((100, y_pos), data.get('title', ''), font=font_title, fill="white")
-            y_pos += 90
-    else:
-        font_title = get_font(72)
-        draw.text((100, y_pos), data.get('title', ''), font=font_title, fill="white")
-        y_pos += 90
+            # Scala il logo mantenendo proporzioni, max 550x220
+            logo.thumbnail((550, 220), Image.Resampling.LANCZOS)
+            img.paste(logo, (margin_left, y), logo)
+            y += logo.height + 28
+            logo_placed = True
+            print(f"  → Logo PNG usato")
+        except Exception as e:
+            print(f"  → Errore logo: {e}")
 
-    # 4. Anno | Voto | Durata
-    font_info = get_font(32)
-    anno = data.get('release_date', '')[:4] or 'N/A'
-    voto = data.get('vote_average', 0)
-    durata = data.get('runtime', 0)
-    info = f"{anno}   ·   ⭐ {voto:.1f}   ·   {durata} min"
-    draw.text((100, y_pos), info, font=font_info, fill=(210, 210, 210, 255))
-    y_pos += 55
+    if not logo_placed:
+        # Titolo testuale come fallback
+        font_title = get_font_montserrat(82, "bold")
+        draw.text((margin_left, y), data.get('title', ''), font=font_title, fill=(255, 255, 255, 255))
+        y += 95
+        print(f"  → Titolo testuale usato (nessun logo)")
 
-    # 5. Descrizione con a capo automatico
-    font_desc = get_font(27)
-    overview = data.get('overview', 'Nessuna descrizione disponibile.')
-    if len(overview) > 280:
-        overview = overview[:277] + "..."
+    # 5. Riga metadati: Generi • Durata • Anno
+    genres = " • ".join([g['name'] for g in data.get('genres', [])[:3]])
+    runtime = data.get('runtime', 0)
+    hours = runtime // 60
+    minutes = runtime % 60
+    duration = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+    year = data.get('release_date', '')[:4]
 
-    max_text_width = int(w * 0.45)
-    lines = wrap_text(overview, font_desc, max_text_width, draw)
+    meta_parts = []
+    if genres:
+        meta_parts.append(genres)
+    if duration and runtime:
+        meta_parts.append(duration)
+    if year:
+        meta_parts.append(year)
+    meta_line = "  •  ".join(meta_parts)
 
-    for line in lines[:4]:  # Massimo 4 righe
-        draw.text((100, y_pos), line, font=font_desc, fill=(170, 170, 170, 255))
-        y_pos += 36
+    font_meta = get_font_montserrat(28, "light")
+    draw.text((margin_left, y), meta_line, font=font_meta, fill=(200, 200, 200, 255))
+    y += 50
 
-    # 6. Salvataggio
-    filename = f"{data['id']}_{data.get('title','film').replace(' ','_')[:30]}.jpg"
-    # Rimuove caratteri non validi nel nome file
-    filename = "".join(c for c in filename if c.isalnum() or c in ('_', '-', '.')).rstrip()
+    # 6. Badge IMDb + voto
+    vote = data.get('vote_average', 0)
+    if vote and vote > 0:
+        draw_imdb_badge(draw, margin_left, y, vote)
+        y += 55
+
+    # 7. Descrizione
+    font_desc = get_font_montserrat(27, "regular")
+    overview = data.get('overview', '')
+    if overview:
+        if len(overview) > 320:
+            overview = overview[:317] + "..."
+        lines = wrap_text(overview, font_desc, text_max_width, draw)
+        y += 10
+        for line in lines[:4]:
+            draw.text((margin_left, y), line, font=font_desc, fill=(200, 200, 200, 220))
+            y += 38
+
+    # 8. Salva
+    safe_title = "".join(c for c in data.get('title', 'film') if c.isalnum() or c in (' ', '_')).strip()
+    safe_title = safe_title.replace(' ', '_')[:25]
+    filename = f"{data['id']}_{safe_title}.jpg"
     save_path = os.path.join(FOLDER, filename)
-    img.convert("RGB").save(save_path, quality=92)
-    print(f"  ✓ Card salvata: {filename}")
+    img.convert("RGB").save(save_path, quality=95)
+    print(f"  ✓ Salvata: {filename}")
 
 # --- ESECUZIONE ---
 print("=== Avvio generazione cards ===")
-print(f"Utente Trakt: {USER}")
+download_fonts()
 
 movies = get_trakt_movies()
-print(f"Film trovati su Trakt: {len(movies)}")
+print(f"Film trovati: {len(movies)}")
 
 count = 0
 for m in movies[:10]:
     try:
-        # La struttura corretta per le raccomandazioni Trakt è m['movie']
-        movie_info = m.get('movie', m)  # Funziona sia per raccomandazioni che per watchlist
+        movie_info = m.get('movie', m)
         title = movie_info.get('title', 'Sconosciuto')
         tmdb_id = movie_info.get('ids', {}).get('tmdb')
 
