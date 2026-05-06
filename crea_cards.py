@@ -85,11 +85,17 @@ def get_trakt_movies():
     return [{'movie': item} for item in response.json()]
 
 def get_tmdb_data(tmdb_id):
-    url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_KEY}&append_to_response=images&language=it-IT"
+    """Ottiene dettagli + loghi separatamente"""
+    url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_KEY}&language=it-IT"
     data = requests.get(url).json()
     if not data.get('overview'):
-        url_en = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_KEY}&append_to_response=images&language=en-US"
+        url_en = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_KEY}&language=en-US"
         data = requests.get(url_en).json()
+    img_url = f"https://api.themoviedb.org/3/movie/{tmdb_id}/images?api_key={TMDB_KEY}"
+    img_data = requests.get(img_url).json()
+    data['images'] = img_data
+    logos = img_data.get('logos', [])
+    print(f"  → Loghi trovati: {len(logos)} (PNG: {len([l for l in logos if l.get('file_path','').endswith('.png')])})")
     return data
 
 def wrap_text(text, font, max_width, draw):
@@ -167,17 +173,19 @@ def create_card(data):
     y = int(h * 0.13)
 
     # 4. Logo PNG ufficiale TMDB
-    logos = []
+logos = []
     if data.get('images') and data['images'].get('logos'):
-        # Preferisce logo italiano, poi inglese, poi qualsiasi
-        for lang in ['it', 'en', None]:
-            candidates = [l for l in data['images']['logos']
-                         if l.get('file_extension') == '.png'
-                         and (lang is None or l.get('iso_639_1') == lang)]
+        all_logos = data['images']['logos']
+        png_logos = [l for l in all_logos if l.get('file_path', '').endswith('.png')]
+        if not png_logos:
+            png_logos = all_logos
+        for lang in ['it', 'en', '']:
+            candidates = [l for l in png_logos if l.get('iso_639_1', '') == lang]
             if candidates:
-                # Prende quello con vote_average più alto
                 logos = sorted(candidates, key=lambda x: x.get('vote_average', 0), reverse=True)
                 break
+        if not logos:
+            logos = sorted(png_logos, key=lambda x: x.get('vote_average', 0), reverse=True)
 
     logo_placed = False
     if logos:
