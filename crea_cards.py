@@ -215,9 +215,29 @@ def create_card(data):
     img.convert("RGB").save(save_path, quality=95)
     print(f"  ✓ Salvata: {filename}")
 
+def clear_old_images():
+    """Elimina le immagini vecchie dalla cartella"""
+    deleted = 0
+    for f in os.listdir(FOLDER):
+        if f.endswith('.jpg'):
+            os.remove(os.path.join(FOLDER, f))
+            deleted += 1
+    print(f"Eliminate {deleted} immagini vecchie")
+
+def generate_index():
+    """Genera il file con tutti gli URL per Projectivity"""
+    base_url = "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/"
+    index_path = os.path.join(FOLDER, "index.txt")
+    files = [f for f in os.listdir(FOLDER) if f.endswith('.jpg')]
+    with open(index_path, 'w') as f:
+        for filename in files:
+            f.write(f"{base_url}{filename}\n")
+    print(f"Index generato con {len(files)} immagini")
+
 # --- ESECUZIONE ---
 print("=== Avvio generazione cards ===")
 download_fonts()
+clear_old_images()  # Prima elimina le vecchie
 
 movies = get_trakt_movies()
 print(f"Film trovati: {len(movies)}")
@@ -239,4 +259,5 @@ for m in movies[:10]:
         print(f"  ✗ Errore su '{title}': {e}")
         continue
 
+generate_index()  # Dopo genera il nuovo index
 print(f"\n=== Completato: {count} cards generate ===")
