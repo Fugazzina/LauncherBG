@@ -7,6 +7,7 @@ import textwrap
 TRAKT_ID = os.getenv('TRAKT_ID')
 TMDB_KEY = os.getenv('TMDB_KEY')
 USER = os.getenv('TRAKT_USER')
+TRAKT_ACCESS_TOKEN = os.getenv('TRAKT_ACCESS_TOKEN')
 FOLDER = "./sfondi_projectivity/"
 
 if not os.path.exists(FOLDER):
