@@ -1,7 +1,7 @@
 name: Genera Sfondi Ogni Giorno
 on:
   schedule:
-    - cron: '0 8 * * *'
+    - cron: '0 7 * * *'
   workflow_dispatch:
 
 jobs:
@@ -10,29 +10,28 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Scarica il codice
-        uses: actions/checkout@v4 # Versione aggiornata
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Installa Python
-        uses: actions/setup-python@v5 # Versione aggiornata
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Installa Librerie
+      - name: Installa librerie
         run: pip install requests Pillow
 
-      - name: Esegui lo script
+      - name: Esegui script
         env:
           TRAKT_ID: ${{ secrets.TRAKT_ID }}
           TMDB_KEY: ${{ secrets.TMDB_KEY }}
           TRAKT_USER: ${{ secrets.TRAKT_USER }}
-        # ATTENZIONE: Assicurati che 'crea_cards.py' sia il nome esatto del tuo file!
-        run: python crea_cards.py 
+        run: python crea_cards.py
 
-      - name: Salva le immagini nel repository
+      - name: Salva immagini nel repository
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          git add sfondi_projectivity/*.jpg || true
-          git commit -m "Aggiornamento sfondi del giorno" || exit 0
-          git push
+          git add sfondi_projectivity/ || true
+          git commit -m "Sfondi aggiornati $(date +%Y-%m-%d)" || echo "Nessuna modifica"
+          git push || echo "Nessuna modifica da pushare"
