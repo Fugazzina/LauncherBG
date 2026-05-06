@@ -29,19 +29,22 @@ def get_font(size):
     return ImageFont.load_default()
 
 def get_trakt_movies():
-    """Recupera i film raccomandati da Trakt"""
-    url = f"https://api.trakt.tv/users/{USER}/recommendations/movies?limit=15"
+    """Recupera le raccomandazioni con autenticazione OAuth"""
+    url = "https://api.trakt.tv/recommendations/movies?limit=15"
     headers = {
         'Content-Type': 'application/json',
         'trakt-api-version': '2',
-        'trakt-api-key': TRAKT_ID  # <-- corretto: era 'trakt-api-set-id'
+        'trakt-api-key': TRAKT_ID,
+        'Authorization': f'Bearer {TRAKT_ACCESS_TOKEN}'
     }
     response = requests.get(url, headers=headers)
     print(f"Trakt status: {response.status_code}")
     if response.status_code != 200:
         print(f"Errore Trakt: {response.text}")
         return []
-    return response.json()
+    
+    # Raccomandazioni: ogni item è direttamente il film
+    return [{'movie': item} for item in response.json()]
 
 def get_tmdb_data(tmdb_id):
     """Ottiene dettagli, loghi e voti da TMDB"""
