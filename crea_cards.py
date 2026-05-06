@@ -13,26 +13,7 @@ FOLDER = "./sfondi_projectivity/"
 if not os.path.exists(FOLDER):
     os.makedirs(FOLDER)
 
-# --- FONT (scaricati durante il workflow) ---
-def get_font(size, bold=False):
-    font_paths_bold = [
-        "/tmp/fonts/Montserrat-Bold.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-    ]
-    font_paths_regular = [
-        "/tmp/fonts/Montserrat-Regular.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    ]
-    paths = font_paths_bold if bold else font_paths_regular
-    for path in paths:
-        try:
-            return ImageFont.truetype(path, size)
-        except:
-            continue
-    return ImageFont.load_default()
-
 def download_fonts():
-    """Scarica Montserrat da Google Fonts"""
     os.makedirs("/tmp/fonts", exist_ok=True)
     fonts = {
         "/tmp/fonts/Montserrat-Bold.ttf": "https://github.com/JulietaUla/Montserrat/raw/master/fonts/ttf/Montserrat-Bold.ttf",
@@ -85,7 +66,6 @@ def get_trakt_movies():
     return [{'movie': item} for item in response.json()]
 
 def get_tmdb_data(tmdb_id):
-    """Ottiene dettagli + loghi separatamente"""
     url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_KEY}&language=it-IT"
     data = requests.get(url).json()
     if not data.get('overview'):
@@ -116,16 +96,11 @@ def wrap_text(text, font, max_width, draw):
     return lines
 
 def draw_imdb_badge(draw, x, y, score):
-    """Disegna il badge IMDb giallo stile Apple TV"""
     font_imdb = get_font_montserrat(22, "bold")
     font_score = get_font_montserrat(26, "bold")
-
-    # Badge giallo IMDb
     badge_w, badge_h = 70, 34
     draw.rounded_rectangle([x, y, x + badge_w, y + badge_h], radius=5, fill=(245, 197, 24))
     draw.text((x + 8, y + 6), "IMDb", font=font_imdb, fill=(0, 0, 0))
-
-    # Voto bianco accanto
     score_text = f"{score:.1f}"
     draw.text((x + badge_w + 10, y + 4), score_text, font=font_score, fill=(255, 255, 255))
 
@@ -140,40 +115,29 @@ def create_card(data):
     # 1. Scarica backdrop
     bg_url = f"https://image.tmdb.org/t/p/original{data['backdrop_path']}"
     img = Image.open(requests.get(bg_url, stream=True).raw).convert("RGBA")
-    
-    # Forza risoluzione 1920x1080
     img = img.resize((1920, 1080), Image.Resampling.LANCZOS)
     w, h = 1920, 1080
 
-    # 2. Sfumatura sinistra stile Apple TV (nera, forte, fino al 55%)
+    # 2. Sfumatura sinistra
     overlay = Image.new('RGBA', (w, h), (0, 0, 0, 0))
     draw_ov = ImageDraw.Draw(overlay)
-    
-    # Zona completamente nera (primi 20%)
     solid_w = int(w * 0.20)
     draw_ov.rectangle([0, 0, solid_w, h], fill=(0, 0, 0, 255))
-    
-    # Gradiente dal 20% al 60%
     gradient_start = solid_w
     gradient_end = int(w * 0.60)
     for x in range(gradient_start, gradient_end):
         progress = (x - gradient_start) / (gradient_end - gradient_start)
-        # Curva esponenziale per sfumatura più naturale
         alpha = int(255 * (1 - progress) ** 1.5)
         draw_ov.line([(x, 0), (x, h)], fill=(0, 0, 0, alpha))
-
     img = Image.alpha_composite(img, overlay)
     draw = ImageDraw.Draw(img)
 
-    # 3. Area testo — colonna sinistra
     margin_left = 80
     text_max_width = int(w * 0.42)
-
-    # Posizione verticale: partiamo da 15% dall'alto
     y = int(h * 0.13)
 
-    # 4. Logo PNG ufficiale TMDB
-logos = []
+    # 3. Logo PNG
+    logos = []
     if data.get('images') and data['images'].get('logos'):
         all_logos = data['images']['logos']
         png_logos = [l for l in all_logos if l.get('file_path', '').endswith('.png')]
@@ -192,7 +156,6 @@ logos = []
         logo_url = f"https://image.tmdb.org/t/p/w500{logos[0]['file_path']}"
         try:
             logo = Image.open(requests.get(logo_url, stream=True).raw).convert("RGBA")
-            # Scala il logo mantenendo proporzioni, max 550x220
             logo.thumbnail((550, 220), Image.Resampling.LANCZOS)
             img.paste(logo, (margin_left, y), logo)
             y += logo.height + 28
@@ -202,20 +165,18 @@ logos = []
             print(f"  → Errore logo: {e}")
 
     if not logo_placed:
-        # Titolo testuale come fallback
         font_title = get_font_montserrat(82, "bold")
         draw.text((margin_left, y), data.get('title', ''), font=font_title, fill=(255, 255, 255, 255))
         y += 95
         print(f"  → Titolo testuale usato (nessun logo)")
 
-    # 5. Riga metadati: Generi • Durata • Anno
+    # 4. Metadati
     genres = " • ".join([g['name'] for g in data.get('genres', [])[:3]])
     runtime = data.get('runtime', 0)
     hours = runtime // 60
     minutes = runtime % 60
     duration = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
     year = data.get('release_date', '')[:4]
-
     meta_parts = []
     if genres:
         meta_parts.append(genres)
@@ -224,18 +185,17 @@ logos = []
     if year:
         meta_parts.append(year)
     meta_line = "  •  ".join(meta_parts)
-
     font_meta = get_font_montserrat(28, "light")
     draw.text((margin_left, y), meta_line, font=font_meta, fill=(200, 200, 200, 255))
     y += 50
 
-    # 6. Badge IMDb + voto
+    # 5. Badge IMDb
     vote = data.get('vote_average', 0)
     if vote and vote > 0:
         draw_imdb_badge(draw, margin_left, y, vote)
         y += 55
 
-    # 7. Descrizione
+    # 6. Descrizione
     font_desc = get_font_montserrat(27, "regular")
     overview = data.get('overview', '')
     if overview:
@@ -247,7 +207,7 @@ logos = []
             draw.text((margin_left, y), line, font=font_desc, fill=(200, 200, 200, 220))
             y += 38
 
-    # 8. Salva
+    # 7. Salva
     safe_title = "".join(c for c in data.get('title', 'film') if c.isalnum() or c in (' ', '_')).strip()
     safe_title = safe_title.replace(' ', '_')[:25]
     filename = f"{data['id']}_{safe_title}.jpg"
@@ -268,16 +228,13 @@ for m in movies[:10]:
         movie_info = m.get('movie', m)
         title = movie_info.get('title', 'Sconosciuto')
         tmdb_id = movie_info.get('ids', {}).get('tmdb')
-
         if not tmdb_id:
             print(f"  → Nessun TMDB ID per '{title}', salto.")
             continue
-
         print(f"\nElaborazione: {title} (TMDB: {tmdb_id})")
         details = get_tmdb_data(tmdb_id)
         create_card(details)
         count += 1
-
     except Exception as e:
         print(f"  ✗ Errore su '{title}': {e}")
         continue
