@@ -200,11 +200,11 @@ def create_card(data):
         alpha = int(255 * (1 - progress) ** 2.0)
         fade_draw.line([(gx, 0), (gx, target_h)], fill=(0, 0, 0, alpha))
 
-# Sfumatura basso: inizia dal 100% così il taglio è invisibile
-    fade_bottom_start = int(target_h * 1)
+# Sfumatura basso: inizia dal 60% così il taglio è invisibile
+    fade_bottom_start = int(target_h * 0.60)
     for gy in range(fade_bottom_start, target_h):
         progress = (gy - fade_bottom_start) / (target_h - fade_bottom_start)
-        alpha = int(255 * progress ** 1)
+        alpha = int(255 * progress ** 0.60)
         fade_draw.line([(0, gy), (target_w, gy)], fill=(0, 0, 0, alpha))
 
     backdrop = Image.alpha_composite(backdrop, fade_overlay)
