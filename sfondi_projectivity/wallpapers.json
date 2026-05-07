@@ -1,27 +1,39 @@
 [
   {
-    "location": "Argo",
-    "title": "Argo",
+    "location": "Penny Dreadful",
+    "title": "Penny Dreadful",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/68734_Argo.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/54671_Penny_Dreadful.jpg"
   },
   {
-    "location": "Nurse Jackie  Terapia dur",
-    "title": "Nurse Jackie  Terapia dur",
+    "location": "The Wire",
+    "title": "The Wire",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/18053_Nurse_Jackie__Terapia_dur.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/1438_The_Wire.jpg"
   },
   {
-    "location": "Royal Pains",
-    "title": "Royal Pains",
+    "location": "The Departed  Il bene e i",
+    "title": "The Departed  Il bene e i",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/18779_Royal_Pains.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/1422_The_Departed__Il_bene_e_i.jpg"
   },
   {
-    "location": "Ribelle  The Brave",
-    "title": "Ribelle  The Brave",
+    "location": "Looper  In fuga dal passa",
+    "title": "Looper  In fuga dal passa",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/62177_Ribelle__The_Brave.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/59967_Looper__In_fuga_dal_passa.jpg"
+  },
+  {
+    "location": "New Amsterdam",
+    "title": "New Amsterdam",
+    "author": "TMDB",
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/80350_New_Amsterdam.jpg"
+  },
+  {
+    "location": "Minority Report",
+    "title": "Minority Report",
+    "author": "TMDB",
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/180_Minority_Report.jpg"
   },
   {
     "location": "Scrubs  Medici ai primi f",
@@ -30,34 +42,34 @@
     "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/4556_Scrubs__Medici_ai_primi_f.jpg"
   },
   {
+    "location": "Lera glaciale",
+    "title": "Lera glaciale",
+    "author": "TMDB",
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/425_Lera_glaciale.jpg"
+  },
+  {
+    "location": "Shameless",
+    "title": "Shameless",
+    "author": "TMDB",
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/34307_Shameless.jpg"
+  },
+  {
     "location": "Prometheus",
     "title": "Prometheus",
     "author": "TMDB",
     "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/70981_Prometheus.jpg"
   },
   {
-    "location": "Fleabag",
-    "title": "Fleabag",
+    "location": "Piovono polpette",
+    "title": "Piovono polpette",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/67070_Fleabag.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/22794_Piovono_polpette.jpg"
   },
   {
-    "location": "Mr Nobody",
-    "title": "Mr Nobody",
+    "location": "American Dad",
+    "title": "American Dad",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/31011_Mr_Nobody.jpg"
-  },
-  {
-    "location": "Snowfall",
-    "title": "Snowfall",
-    "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/71694_Snowfall.jpg"
-  },
-  {
-    "location": "Chicago Med",
-    "title": "Chicago Med",
-    "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/62650_Chicago_Med.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/1433_American_Dad.jpg"
   },
   {
     "location": "Bones",
@@ -66,22 +78,16 @@
     "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/1911_Bones.jpg"
   },
   {
-    "location": "Cera una volta",
-    "title": "Cera una volta",
+    "location": "OnePunch Man",
+    "title": "OnePunch Man",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/39272_Cera_una_volta.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/63926_OnePunch_Man.jpg"
   },
   {
-    "location": "Demon Slayer Kimetsu no Y",
-    "title": "Demon Slayer Kimetsu no Y",
+    "location": "Lei",
+    "title": "Lei",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/85937_Demon_Slayer_Kimetsu_no_Y.jpg"
-  },
-  {
-    "location": "Ralph Spaccatutto",
-    "title": "Ralph Spaccatutto",
-    "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/82690_Ralph_Spaccatutto.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/152601_Lei.jpg"
   },
   {
     "location": "The Resident",
@@ -96,22 +102,16 @@
     "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/17431_Moon.jpg"
   },
   {
-    "location": "BoJack Horseman",
-    "title": "BoJack Horseman",
+    "location": "Alla ricerca di Nemo",
+    "title": "Alla ricerca di Nemo",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/61222_BoJack_Horseman.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/12_Alla_ricerca_di_Nemo.jpg"
   },
   {
-    "location": "Bleach",
-    "title": "Bleach",
+    "location": "The Lego Movie",
+    "title": "The Lego Movie",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/30984_Bleach.jpg"
-  },
-  {
-    "location": "Big Hero 6",
-    "title": "Big Hero 6",
-    "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/177572_Big_Hero_6.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/137106_The_Lego_Movie.jpg"
   },
   {
     "location": "Kung Fu Panda",
