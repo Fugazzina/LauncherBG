@@ -137,7 +137,7 @@ def create_card(data):
     bottom_start = int(h * 0.55)
     for gy in range(bottom_start, h):
         progress = (gy - bottom_start) / (h - bottom_start)
-        alpha = int(200 * progress ** 1.2)
+        alpha = int(255 * progress ** 0.8)
         draw_ov.line([(0, gy), (w, gy)], fill=(0, 0, 0, alpha))
 
     img = Image.alpha_composite(img, overlay)
