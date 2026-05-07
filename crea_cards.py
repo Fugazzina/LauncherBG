@@ -13,6 +13,23 @@ FOLDER = "./sfondi_projectivity/"
 if not os.path.exists(FOLDER):
     os.makedirs(FOLDER)
 
+# Logo IMDb ufficiale scaricato una volta sola
+IMDB_LOGO_PATH = "/tmp/imdb_logo.png"
+
+def download_imdb_logo():
+    """Scarica il logo IMDb ufficiale"""
+    if not os.path.exists(IMDB_LOGO_PATH):
+        try:
+            url = "https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg"
+            # Usiamo un PNG diretto invece di SVG
+            url_png = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/IMDB_Logo_2016.svg/200px-IMDB_Logo_2016.svg.png"
+            r = requests.get(url_png)
+            with open(IMDB_LOGO_PATH, 'wb') as f:
+                f.write(r.content)
+            print("Logo IMDb scaricato")
+        except Exception as e:
+            print(f"Errore download logo IMDb: {e}")
+
 def download_fonts():
     os.makedirs("/tmp/fonts", exist_ok=True)
     fonts = {
@@ -95,13 +112,24 @@ def wrap_text(text, font, max_width, draw):
         lines.append(current_line)
     return lines
 
-def draw_imdb_badge(draw, x, y, score):
-    font_badge = get_font_montserrat(20, "bold")
-    font_score = get_font_montserrat(26, "bold")
-    badge_w, badge_h = 72, 34
-    draw.rounded_rectangle([x, y, x + badge_w, y + badge_h], radius=5, fill=(245, 197, 24))
-    draw.text((x + 7, y + 7), "IMDb", font=font_badge, fill=(0, 0, 0))
-    draw.text((x + badge_w + 10, y + 4), f"{score:.1f}", font=font_score, fill=(255, 255, 255))
+def draw_imdb_badge(draw, img, x, y, score):
+    """Usa il logo IMDb ufficiale + voto"""
+    font_score = get_font_montserrat(30, "bold")
+    
+    # Prova a usare il logo IMDb scaricato
+    try:
+        imdb_logo = Image.open(IMDB_LOGO_PATH).convert("RGBA")
+        imdb_logo.thumbnail((90, 45), Image.Resampling.LANCZOS)
+        img.paste(imdb_logo, (x, y), imdb_logo)
+        # Voto accanto al logo
+        draw.text((x + 100, y + 5), f"{score:.1f}", font=font_score, fill=(255, 255, 255))
+    except:
+        # Fallback badge giallo disegnato
+        font_badge = get_font_montserrat(20, "bold")
+        badge_w, badge_h = 72, 34
+        draw.rounded_rectangle([x, y, x + badge_w, y + badge_h], radius=5, fill=(245, 197, 24))
+        draw.text((x + 7, y + 7), "IMDb", font=font_badge, fill=(0, 0, 0))
+        draw.text((x + badge_w + 10, y + 4), f"{score:.1f}", font=font_score, fill=(255, 255, 255))
 
 def create_card(data):
     if not data.get('backdrop_path'):
@@ -117,37 +145,46 @@ def create_card(data):
     img = img.resize((1920, 1080), Image.Resampling.LANCZOS)
     w, h = 1920, 1080
 
-    # 2. Sfumatura sinistra + basso
+    # 2. Overlay scuro - stile Malena
+    # Metà sinistra: gradiente da nero a trasparente
+    # Metà inferiore: completamente nera per le app
     overlay = Image.new('RGBA', (w, h), (0, 0, 0, 0))
     draw_ov = ImageDraw.Draw(overlay)
 
-    # Zona nera solida a sinistra (primi 18%)
-    solid_w = int(w * 0.18)
+    # --- ZONA SINISTRA: nera solida fino al 25% ---
+    solid_w = int(w * 0.25)
     draw_ov.rectangle([0, 0, solid_w, h], fill=(0, 0, 0, 255))
 
-    # Gradiente sinistra dal 18% al 58%
+    # --- GRADIENTE SINISTRA: dal 25% al 65% ---
     gradient_start = solid_w
-    gradient_end = int(w * 0.58)
+    gradient_end = int(w * 0.65)
     for gx in range(gradient_start, gradient_end):
         progress = (gx - gradient_start) / (gradient_end - gradient_start)
-        alpha = int(255 * (1 - progress) ** 1.5)
+        alpha = int(255 * (1 - progress) ** 1.8)
         draw_ov.line([(gx, 0), (gx, h)], fill=(0, 0, 0, alpha))
 
-    # Sfumatura basso dal 55% al 100%
-    bottom_start = int(h * 0.55)
-    for gy in range(bottom_start, h):
-        progress = (gy - bottom_start) / (h - bottom_start)
-        alpha = int(255 * progress ** 0.8)
+    # --- ZONA INFERIORE: nera solida dal 50% in giù ---
+    # Questo è il punto chiave per far leggere le app
+    bottom_solid_start = int(h * 0.50)
+    draw_ov.rectangle([0, bottom_solid_start, w, h], fill=(0, 0, 0, 255))
+
+    # --- GRADIENTE TRA IMMAGINE E ZONA NERA: dal 38% al 50% ---
+    fade_start = int(h * 0.38)
+    fade_end = bottom_solid_start
+    for gy in range(fade_start, fade_end):
+        progress = (gy - fade_start) / (fade_end - fade_start)
+        alpha = int(255 * progress ** 0.7)
         draw_ov.line([(0, gy), (w, gy)], fill=(0, 0, 0, alpha))
 
     img = Image.alpha_composite(img, overlay)
     draw = ImageDraw.Draw(img)
 
+    # 3. Layout testo - tutto nella metà superiore sinistra
     margin_left = 80
-    text_max_width = int(w * 0.42)
-    y = int(h * 0.13)
+    text_max_width = int(w * 0.40)
+    y = int(h * 0.08)  # Inizia dall'8% dall'alto
 
-    # 3. Logo PNG
+    # 4. Logo PNG film
     logos = []
     if data.get('images') and data['images'].get('logos'):
         all_logos = data['images']['logos']
@@ -167,21 +204,21 @@ def create_card(data):
         logo_url = f"https://image.tmdb.org/t/p/w500{logos[0]['file_path']}"
         try:
             logo = Image.open(requests.get(logo_url, stream=True).raw).convert("RGBA")
-            logo.thumbnail((550, 220), Image.Resampling.LANCZOS)
+            logo.thumbnail((520, 200), Image.Resampling.LANCZOS)
             img.paste(logo, (margin_left, y), logo)
-            y += logo.height + 28
+            y += logo.height + 25
             logo_placed = True
             print(f"  → Logo PNG usato")
         except Exception as e:
             print(f"  → Errore logo: {e}")
 
     if not logo_placed:
-        font_title = get_font_montserrat(82, "bold")
+        font_title = get_font_montserrat(80, "bold")
         draw.text((margin_left, y), data.get('title', ''), font=font_title, fill=(255, 255, 255, 255))
-        y += 95
-        print(f"  → Titolo testuale usato (nessun logo)")
+        y += 90
+        print(f"  → Titolo testuale usato")
 
-    # 4. Metadati
+    # 5. Metadati: Generi • Durata • Anno
     genres = " • ".join([g['name'] for g in data.get('genres', [])[:3]])
     runtime = data.get('runtime', 0)
     hours = runtime // 60
@@ -198,27 +235,27 @@ def create_card(data):
     meta_line = "  •  ".join(meta_parts)
     font_meta = get_font_montserrat(28, "light")
     draw.text((margin_left, y), meta_line, font=font_meta, fill=(200, 200, 200, 255))
-    y += 50
+    y += 48
 
-    # 5. Badge IMDb
+    # 6. Badge IMDb ufficiale + voto
     vote = data.get('vote_average', 0)
     if vote and vote > 0:
-        draw_imdb_badge(draw, margin_left, y, vote)
-        y += 55
+        draw_imdb_badge(draw, img, margin_left, y, vote)
+        y += 60
 
-    # 6. Descrizione
-    font_desc = get_font_montserrat(27, "regular")
+    # 7. Descrizione
+    font_desc = get_font_montserrat(26, "regular")
     overview = data.get('overview', '')
     if overview:
-        if len(overview) > 320:
-            overview = overview[:317] + "..."
+        if len(overview) > 300:
+            overview = overview[:297] + "..."
         lines = wrap_text(overview, font_desc, text_max_width, draw)
-        y += 10
+        y += 8
         for line in lines[:4]:
-            draw.text((margin_left, y), line, font=font_desc, fill=(200, 200, 200, 220))
-            y += 38
+            draw.text((margin_left, y), line, font=font_desc, fill=(190, 190, 190, 220))
+            y += 36
 
-    # 7. Salva
+    # 8. Salva
     safe_title = "".join(c for c in data.get('title', 'film') if c.isalnum() or c in (' ', '_')).strip()
     safe_title = safe_title.replace(' ', '_')[:25]
     filename = f"{data['id']}_{safe_title}.jpg"
@@ -259,11 +296,11 @@ def generate_json():
     with open(json_path, 'w') as f:
         json.dump(wallpapers, f, indent=2)
     print(f"JSON generato con {len(wallpapers)} immagini")
-    print(f"URL JSON: {base_url}wallpapers.json")
 
 # --- ESECUZIONE ---
 print("=== Avvio generazione cards ===")
 download_fonts()
+download_imdb_logo()
 clear_old_images()
 
 movies = get_trakt_movies()
