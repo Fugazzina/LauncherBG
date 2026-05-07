@@ -173,8 +173,8 @@ def create_card(data):
     bg_url = f"https://image.tmdb.org/t/p/original{data['backdrop_path']}"
     backdrop = Image.open(requests.get(bg_url, stream=True).raw).convert("RGBA")
 
-    # 3. Ridimensiona backdrop — altezza 75% dello schermo, allineato in alto
-    target_h = int(h * 0.75)
+    # 3. Ridimensiona backdrop — altezza 50% dello schermo, allineato in alto
+    target_h = int(h * 0.50)
     target_w = int(target_h * backdrop.width / backdrop.height)
 
     # Se troppo stretto, allarga fino al bordo destro
@@ -199,13 +199,6 @@ def create_card(data):
         # Curva molto morbida (esponente basso = sfumatura graduale)
         alpha = int(255 * (1 - progress) ** 2.0)
         fade_draw.line([(gx, 0), (gx, target_h)], fill=(0, 0, 0, alpha))
-
-    # Sfumatura basso: dal trasparente al nero su 40% dell'altezza
-    fade_bottom_start = int(target_h * 0.60)
-    for gy in range(fade_bottom_start, target_h):
-        progress = (gy - fade_bottom_start) / (target_h - fade_bottom_start)
-        alpha = int(255 * progress ** 0.9)
-        fade_draw.line([(0, gy), (target_w, gy)], fill=(0, 0, 0, alpha))
 
     backdrop = Image.alpha_composite(backdrop, fade_overlay)
 
