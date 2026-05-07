@@ -234,6 +234,31 @@ def generate_index():
             f.write(f"{base_url}{filename}\n")
     print(f"Index generato con {len(files)} immagini")
 
+def generate_json():
+    """Genera il file JSON per il plugin Overflight"""
+    base_url = "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/"
+    json_path = os.path.join(FOLDER, "wallpapers.json")
+    
+    files = [f for f in os.listdir(FOLDER) if f.endswith('.jpg')]
+    
+    wallpapers = []
+    for filename in files:
+        # Ricava il titolo dal nome del file (rimuove ID e underscore)
+        title = filename.replace('.jpg', '').split('_', 1)[-1].replace('_', ' ')
+        wallpapers.append({
+            "location": title,
+            "title": title,
+            "author": "TMDB",
+            "url_img": f"{base_url}{filename}"
+        })
+    
+    with open(json_path, 'w') as f:
+        import json
+        json.dump(wallpapers, f, indent=2)
+    
+    print(f"JSON generato con {len(wallpapers)} immagini")
+    print(f"URL JSON: {base_url}wallpapers.json")
+
 # --- ESECUZIONE ---
 print("=== Avvio generazione cards ===")
 download_fonts()
