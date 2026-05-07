@@ -204,7 +204,7 @@ def create_card(data):
     fade_bottom_start = int(target_h * 0.90)
     for gy in range(fade_bottom_start, target_h):
         progress = (gy - fade_bottom_start) / (target_h - fade_bottom_start)
-        alpha = int(255 * (1 - progress) ** 2.0)
+        alpha = int(255 * progress ** 1)
         fade_draw.line([(0, gy), (target_w, gy)], fill=(0, 0, 0, alpha))
 
     backdrop = Image.alpha_composite(backdrop, fade_overlay)
