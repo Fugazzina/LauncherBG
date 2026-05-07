@@ -174,22 +174,32 @@ def create_card(data):
     bg_url = f"https://image.tmdb.org/t/p/original{data['backdrop_path']}"
     backdrop = Image.open(requests.get(bg_url, stream=True).raw).convert("RGBA")
 
-# 3. Ridimensiona backdrop — PIU ALTO dello schermo così il bordo va fuori canvas
-    target_h = h + 100  # 100px oltre il bordo inferiore = nessuna riga visibile
-    target_w = int(target_h * backdrop.width / backdrop.height)
-    if target_w < int(w * 0.55):
-        target_w = int(w * 0.55)
-        target_h = int(target_w * backdrop.height / backdrop.width)
+    # 3. Ridimensiona - larghezza fissa al 68%, altezza proporzionale
+    target_w = int(w * 0.68)
+    target_h = int(target_w * backdrop.height / backdrop.width)
     backdrop = backdrop.resize((target_w, target_h), Image.Resampling.LANCZOS)
 
-    # 4. Sfumatura SOLO sul bordo sinistro del backdrop (quella che funzionava)
+    # 4. Sfumatura sinistra morbida + fondo forzato a nero
     fade_overlay = Image.new('RGBA', (target_w, target_h), (0, 0, 0, 0))
     fade_draw = ImageDraw.Draw(fade_overlay)
+
+    # Sfumatura sinistra (quella che funzionava)
     fade_width = int(target_w * 0.45)
     for gx in range(fade_width):
         progress = gx / fade_width
         alpha = int(255 * (1 - progress) ** 2.0)
         fade_draw.line([(gx, 0), (gx, target_h)], fill=(0, 0, 0, alpha))
+
+    # Sfumatura inferiore aggressiva dal 50%
+    fade_bottom_start = int(target_h * 0.50)
+    for gy in range(fade_bottom_start, target_h):
+        progress = (gy - fade_bottom_start) / (target_h - fade_bottom_start)
+        alpha = int(255 * progress ** 0.4)
+        fade_draw.line([(0, gy), (target_w, gy)], fill=(0, 0, 0, alpha))
+
+    # Ultimi 5 pixel forzati a nero totale — elimina qualsiasi riga residua
+    fade_draw.rectangle([0, target_h - 5, target_w, target_h], fill=(0, 0, 0, 255))
+
     backdrop = Image.alpha_composite(backdrop, fade_overlay)
 
     # Sfumatura sinistra morbida su 45% della larghezza (quella che funzionava)
