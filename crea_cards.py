@@ -201,13 +201,12 @@ def create_card(data):
         fade_draw.line([(gx, 0), (gx, target_h)], fill=(0, 0, 0, alpha))
     
     # Sfumatura basso: dal trasparente al nero su 10% dell'altezza
-    fade_bottom_start = int(target_h * 0.90)
+    fade_bottom_start = int(target_h * 0.85)
     for gy in range(fade_bottom_start, target_h):
         progress = (gy - fade_bottom_start) / (target_h - fade_bottom_start)
         alpha = int(255 * progress ** 0.9)
-        fade_draw.line([(0, gy), (target_w, gy)], fill=(0, 0, 0, alpha))
     
-    backdrop = Image.alpha_composite(backdrop, fade_overlay)
+        backdrop = Image.alpha_composite(backdrop, fade_overlay)
 
     # 6. Incolla backdrop sul canvas nero
     img.paste(backdrop, (pos_x, pos_y), backdrop)
