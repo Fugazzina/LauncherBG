@@ -1,3 +1,136 @@
+import requests
+from PIL import Image, ImageDraw, ImageFont
+import os
+import json
+
+# --- CONFIGURAZIONE ---
+TRAKT_ID = os.getenv('TRAKT_ID')
+TMDB_KEY = os.getenv('TMDB_KEY')
+USER = os.getenv('TRAKT_USER')
+TRAKT_ACCESS_TOKEN = os.getenv('TRAKT_ACCESS_TOKEN')
+FOLDER = "./sfondi_projectivity/"
+
+if not os.path.exists(FOLDER):
+    os.makedirs(FOLDER)
+
+# Logo IMDb ufficiale scaricato una volta sola
+IMDB_LOGO_PATH = "/tmp/imdb_logo.png"
+
+def download_imdb_logo():
+    """Scarica il logo IMDb ufficiale"""
+    if not os.path.exists(IMDB_LOGO_PATH):
+        try:
+            url = "https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg"
+            # Usiamo un PNG diretto invece di SVG
+            url_png = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/IMDB_Logo_2016.svg/200px-IMDB_Logo_2016.svg.png"
+            r = requests.get(url_png)
+            with open(IMDB_LOGO_PATH, 'wb') as f:
+                f.write(r.content)
+            print("Logo IMDb scaricato")
+        except Exception as e:
+            print(f"Errore download logo IMDb: {e}")
+
+def download_fonts():
+    os.makedirs("/tmp/fonts", exist_ok=True)
+    fonts = {
+        "/tmp/fonts/Montserrat-Bold.ttf": "https://github.com/JulietaUla/Montserrat/raw/master/fonts/ttf/Montserrat-Bold.ttf",
+        "/tmp/fonts/Montserrat-Regular.ttf": "https://github.com/JulietaUla/Montserrat/raw/master/fonts/ttf/Montserrat-Regular.ttf",
+        "/tmp/fonts/Montserrat-Light.ttf": "https://github.com/JulietaUla/Montserrat/raw/master/fonts/ttf/Montserrat-Light.ttf",
+    }
+    for path, url in fonts.items():
+        if not os.path.exists(path):
+            try:
+                r = requests.get(url)
+                with open(path, 'wb') as f:
+                    f.write(r.content)
+                print(f"Font scaricato: {path}")
+            except Exception as e:
+                print(f"Errore download font: {e}")
+
+def get_font_montserrat(size, style="regular"):
+    paths = {
+        "bold": "/tmp/fonts/Montserrat-Bold.ttf",
+        "regular": "/tmp/fonts/Montserrat-Regular.ttf",
+        "light": "/tmp/fonts/Montserrat-Light.ttf",
+    }
+    fallbacks = [
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    ]
+    try:
+        return ImageFont.truetype(paths.get(style, paths["regular"]), size)
+    except:
+        for f in fallbacks:
+            try:
+                return ImageFont.truetype(f, size)
+            except:
+                continue
+    return ImageFont.load_default()
+
+def get_trakt_movies():
+    url = "https://api.trakt.tv/recommendations/movies?limit=15"
+    headers = {
+        'Content-Type': 'application/json',
+        'trakt-api-version': '2',
+        'trakt-api-key': TRAKT_ID,
+        'Authorization': f'Bearer {TRAKT_ACCESS_TOKEN}'
+    }
+    response = requests.get(url, headers=headers)
+    print(f"Trakt status: {response.status_code}")
+    if response.status_code != 200:
+        print(f"Errore Trakt: {response.text}")
+        return []
+    return [{'movie': item} for item in response.json()]
+
+def get_tmdb_data(tmdb_id):
+    url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_KEY}&language=it-IT"
+    data = requests.get(url).json()
+    if not data.get('overview'):
+        url_en = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_KEY}&language=en-US"
+        data = requests.get(url_en).json()
+    img_url = f"https://api.themoviedb.org/3/movie/{tmdb_id}/images?api_key={TMDB_KEY}"
+    img_data = requests.get(img_url).json()
+    data['images'] = img_data
+    logos = img_data.get('logos', [])
+    print(f"  → Loghi trovati: {len(logos)} (PNG: {len([l for l in logos if l.get('file_path','').endswith('.png')])})")
+    return data
+
+def wrap_text(text, font, max_width, draw):
+    words = text.split()
+    lines = []
+    current_line = ""
+    for word in words:
+        test = f"{current_line} {word}".strip()
+        bbox = draw.textbbox((0, 0), test, font=font)
+        if bbox[2] <= max_width:
+            current_line = test
+        else:
+            if current_line:
+                lines.append(current_line)
+            current_line = word
+    if current_line:
+        lines.append(current_line)
+    return lines
+
+def draw_imdb_badge(draw, img, x, y, score):
+    """Usa il logo IMDb ufficiale + voto"""
+    font_score = get_font_montserrat(30, "bold")
+    
+    # Prova a usare il logo IMDb scaricato
+    try:
+        imdb_logo = Image.open(IMDB_LOGO_PATH).convert("RGBA")
+        imdb_logo.thumbnail((90, 45), Image.Resampling.LANCZOS)
+        img.paste(imdb_logo, (x, y), imdb_logo)
+        # Voto accanto al logo
+        draw.text((x + 100, y + 5), f"{score:.1f}", font=font_score, fill=(255, 255, 255))
+    except:
+        # Fallback badge giallo disegnato
+        font_badge = get_font_montserrat(20, "bold")
+        badge_w, badge_h = 72, 34
+        draw.rounded_rectangle([x, y, x + badge_w, y + badge_h], radius=5, fill=(245, 197, 24))
+        draw.text((x + 7, y + 7), "IMDb", font=font_badge, fill=(0, 0, 0))
+        draw.text((x + badge_w + 10, y + 4), f"{score:.1f}", font=font_score, fill=(255, 255, 255))
+
 def create_card(data):
     if not data.get('backdrop_path'):
         print(f"  → Nessun backdrop per '{data.get('title', 'N/A')}', salto.")
@@ -135,3 +268,67 @@ def create_card(data):
     save_path = os.path.join(FOLDER, filename)
     img.convert("RGB").save(save_path, quality=95)
     print(f"  ✓ Salvata: {filename}")
+
+def clear_old_images():
+    deleted = 0
+    for f in os.listdir(FOLDER):
+        if f.endswith('.jpg'):
+            os.remove(os.path.join(FOLDER, f))
+            deleted += 1
+    print(f"Eliminate {deleted} immagini vecchie")
+
+def generate_index():
+    base_url = "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/"
+    index_path = os.path.join(FOLDER, "index.txt")
+    files = [f for f in os.listdir(FOLDER) if f.endswith('.jpg')]
+    with open(index_path, 'w') as f:
+        for filename in files:
+            f.write(f"{base_url}{filename}\n")
+    print(f"Index generato con {len(files)} immagini")
+
+def generate_json():
+    base_url = "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/"
+    json_path = os.path.join(FOLDER, "wallpapers.json")
+    files = [f for f in os.listdir(FOLDER) if f.endswith('.jpg')]
+    wallpapers = []
+    for filename in files:
+        title = filename.replace('.jpg', '').split('_', 1)[-1].replace('_', ' ')
+        wallpapers.append({
+            "location": title,
+            "title": title,
+            "author": "TMDB",
+            "url_img": f"{base_url}{filename}"
+        })
+    with open(json_path, 'w') as f:
+        json.dump(wallpapers, f, indent=2)
+    print(f"JSON generato con {len(wallpapers)} immagini")
+
+# --- ESECUZIONE ---
+print("=== Avvio generazione cards ===")
+download_fonts()
+download_imdb_logo()
+clear_old_images()
+
+movies = get_trakt_movies()
+print(f"Film trovati: {len(movies)}")
+
+count = 0
+for m in movies[:10]:
+    try:
+        movie_info = m.get('movie', m)
+        title = movie_info.get('title', 'Sconosciuto')
+        tmdb_id = movie_info.get('ids', {}).get('tmdb')
+        if not tmdb_id:
+            print(f"  → Nessun TMDB ID per '{title}', salto.")
+            continue
+        print(f"\nElaborazione: {title} (TMDB: {tmdb_id})")
+        details = get_tmdb_data(tmdb_id)
+        create_card(details)
+        count += 1
+    except Exception as e:
+        print(f"  ✗ Errore su '{title}': {e}")
+        continue
+
+generate_index()
+generate_json()
+print(f"\n=== Completato: {count} cards generate ===")
