@@ -284,5 +284,8 @@ for m in movies[:10]:
         print(f"  ✗ Errore su '{title}': {e}")
         continue
 
-generate_index()  # Dopo genera il nuovo index
+generate_index()  # Dopo genera il nuovo indexgenerate_index()
+generate_json()
 print(f"\n=== Completato: {count} cards generate ===")
+
+
