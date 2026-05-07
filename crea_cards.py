@@ -173,52 +173,52 @@ def create_card(data):
     bg_url = f"https://image.tmdb.org/t/p/original{data['backdrop_path']}"
     backdrop = Image.open(requests.get(bg_url, stream=True).raw).convert("RGBA")
 
-    # 3. Ridimensiona backdrop — altezza 50% dello schermo, allineato in alto
-    target_h = int(h * 0.50)
+    # 3. Ridimensiona mantenendo proporzioni, altezza 60%
+    target_h = int(h * 0.60)
     target_w = int(target_h * backdrop.width / backdrop.height)
-
-    # Se troppo stretto, allarga fino al bordo destro
     if target_w < int(w * 0.55):
         target_w = int(w * 0.55)
         target_h = int(target_w * backdrop.height / backdrop.width)
-
     backdrop = backdrop.resize((target_w, target_h), Image.Resampling.LANCZOS)
 
-    # 4. Posizione: angolo in alto a DESTRA, tocca il bordo
-    pos_x = w - target_w  # nessun margine, arriva al bordo
-    pos_y = 0
-
-    # 5. Sfumatura MORBIDA sul lato sinistro del backdrop
+    # 4. Sfumatura SOLO sul bordo inferiore del backdrop
+    # Inizia dall'80% così il fondo del backdrop sfuma completamente nel nero
     fade_overlay = Image.new('RGBA', (target_w, target_h), (0, 0, 0, 0))
     fade_draw = ImageDraw.Draw(fade_overlay)
-
-    # Sfumatura sinistra: dal nero totale al trasparente su 45% della larghezza
-    fade_width = int(target_w * 0.45)
-    for gx in range(fade_width):
-        progress = gx / fade_width
-        # Curva molto morbida (esponente basso = sfumatura graduale)
-        alpha = int(255 * (1 - progress) ** 2.0)
-        fade_draw.line([(gx, 0), (gx, target_h)], fill=(0, 0, 0, alpha))
-
-# Sfumatura basso: inizia dal 60% così il taglio è invisibile
-    fade_bottom_start = int(target_h * 0.60)
+    fade_bottom_start = int(target_h * 0.70)
     for gy in range(fade_bottom_start, target_h):
         progress = (gy - fade_bottom_start) / (target_h - fade_bottom_start)
-        alpha = int(255 * progress ** 0.60)
+        alpha = int(255 * progress ** 0.5)
         fade_draw.line([(0, gy), (target_w, gy)], fill=(0, 0, 0, alpha))
-
     backdrop = Image.alpha_composite(backdrop, fade_overlay)
 
-    # 6. Incolla backdrop sul canvas nero
-    img.paste(backdrop, (pos_x, pos_y), backdrop)
+    # 5. Incolla backdrop in alto a destra
+    pos_x = w - target_w
+    img.paste(backdrop, (pos_x, 0), backdrop)
+
+    # 6. Sfumatura sinistra su TUTTA L'IMMAGINE FINALE (non solo sul backdrop)
+    # Così copre sia la parte con immagine che la parte nera sotto
+    full_overlay = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    full_draw = ImageDraw.Draw(full_overlay)
+
+    solid_w = int(w * 0.22)
+    full_draw.rectangle([0, 0, solid_w, h], fill=(0, 0, 0, 255))
+
+    gradient_end = int(w * 0.62)
+    for gx in range(solid_w, gradient_end):
+        progress = (gx - solid_w) / (gradient_end - solid_w)
+        alpha = int(255 * (1 - progress) ** 2.2)
+        full_draw.line([(gx, 0), (gx, h)], fill=(0, 0, 0, alpha))
+
+    img = Image.alpha_composite(img, full_overlay)
     draw = ImageDraw.Draw(img)
 
-    # 7. Testo — colonna sinistra
+    # 7. Testo
     margin_left = 80
     text_max_width = int(w * 0.42)
     y = int(h * 0.08)
 
-    # 8. Logo PNG film
+    # 8. Logo PNG
     logos = []
     if data.get('images') and data['images'].get('logos'):
         all_logos = data['images']['logos']
@@ -277,7 +277,7 @@ def create_card(data):
         draw_imdb_badge(draw, img, margin_left, y, vote)
         y += 60
 
-    # 11. Descrizione — testo pulito senza sfondo
+    # 11. Descrizione
     font_desc = get_font_montserrat(26, "regular")
     overview = data.get('overview', '')
     if overview:
