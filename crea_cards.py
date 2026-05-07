@@ -181,39 +181,44 @@ def create_card(data):
         target_h = int(target_w * backdrop.height / backdrop.width)
     backdrop = backdrop.resize((target_w, target_h), Image.Resampling.LANCZOS)
 
-    # 4. Sfumatura SOLO sul bordo inferiore del backdrop
-    # Inizia dall'80% così il fondo del backdrop sfuma completamente nel nero
+    # 4. Sfumatura sul backdrop — bordo sinistro morbido + bordo inferiore
     fade_overlay = Image.new('RGBA', (target_w, target_h), (0, 0, 0, 0))
     fade_draw = ImageDraw.Draw(fade_overlay)
+
+    # Sfumatura sinistra morbida su 45% della larghezza (quella che funzionava)
+    fade_width = int(target_w * 0.45)
+    for gx in range(fade_width):
+        progress = gx / fade_width
+        alpha = int(255 * (1 - progress) ** 2.0)
+        fade_draw.line([(gx, 0), (gx, target_h)], fill=(0, 0, 0, alpha))
+
+    # Sfumatura inferiore — dal 70% in giù per eliminare la riga
     fade_bottom_start = int(target_h * 0.70)
     for gy in range(fade_bottom_start, target_h):
         progress = (gy - fade_bottom_start) / (target_h - fade_bottom_start)
         alpha = int(255 * progress ** 0.5)
         fade_draw.line([(0, gy), (target_w, gy)], fill=(0, 0, 0, alpha))
+
     backdrop = Image.alpha_composite(backdrop, fade_overlay)
 
     # 5. Incolla backdrop in alto a destra
     pos_x = w - target_w
     img.paste(backdrop, (pos_x, 0), backdrop)
 
-    # 6. Sfumatura sinistra su TUTTA L'IMMAGINE FINALE (non solo sul backdrop)
-    # Così copre sia la parte con immagine che la parte nera sotto
+    # 6. Sfumatura sinistra sull'immagine INTERA per coprire anche la zona nera sotto
     full_overlay = Image.new('RGBA', (w, h), (0, 0, 0, 0))
     full_draw = ImageDraw.Draw(full_overlay)
-    
-    solid_w = int(w * 0.22)
-    full_draw.rectangle([0, 0, solid_w, h], fill=(0, 0, 0, 255))
 
-    gradient_end = int(w * 0.75)
-    for gx in range(solid_w, gradient_end):
-        progress = (gx - solid_w) / (gradient_end - solid_w)
-        alpha = int(255 * (1 - progress) ** 1.8)
+    # Stessa larghezza proporzionale al canvas completo
+    full_fade_width = pos_x + int(target_w * 0.45)
+    for gx in range(full_fade_width):
+        progress = gx / full_fade_width
+        alpha = int(255 * (1 - progress) ** 2.0)
         full_draw.line([(gx, 0), (gx, h)], fill=(0, 0, 0, alpha))
-   
 
     img = Image.alpha_composite(img, full_overlay)
     draw = ImageDraw.Draw(img)
-
+ 
     # 7. Testo
     margin_left = 80
     text_max_width = int(w * 0.42)
