@@ -174,54 +174,33 @@ def create_card(data):
     bg_url = f"https://image.tmdb.org/t/p/original{data['backdrop_path']}"
     backdrop = Image.open(requests.get(bg_url, stream=True).raw).convert("RGBA")
 
-    # 3. Ridimensiona - larghezza fissa al 68%, altezza proporzionale
-    target_w = int(w * 0.68)
-    target_h = int(target_w * backdrop.height / backdrop.width)
+    # 3. Crop + resize: prende la parte destra del backdrop, altezza PIENA schermo
+    orig_w, orig_h = backdrop.size
+    
+    # Taglia il 35% sinistro del backdrop (tanto sarebbe coperto dal testo)
+    crop_x = int(orig_w * 0.35)
+    backdrop = backdrop.crop((crop_x, 0, orig_w, orig_h))
+    
+    # Ridimensiona a 65% larghezza × 100% altezza — nessun bordo inferiore possibile
+    target_w = int(w * 0.65)
+    target_h = h  # Esattamente 1080px = canvas height = ZERO righe visibili
     backdrop = backdrop.resize((target_w, target_h), Image.Resampling.LANCZOS)
 
-    # 4. Sfumatura sinistra morbida + fondo forzato a nero
+    # 4. Solo sfumatura SINISTRA sul backdrop (basso non serve, arriva fino in fondo)
     fade_overlay = Image.new('RGBA', (target_w, target_h), (0, 0, 0, 0))
     fade_draw = ImageDraw.Draw(fade_overlay)
-
-    # Sfumatura sinistra (quella che funzionava)
     fade_width = int(target_w * 0.45)
     for gx in range(fade_width):
         progress = gx / fade_width
         alpha = int(255 * (1 - progress) ** 2.0)
         fade_draw.line([(gx, 0), (gx, target_h)], fill=(0, 0, 0, alpha))
-
-    # Sfumatura inferiore aggressiva dal 50%
-    fade_bottom_start = int(target_h * 0.50)
-    for gy in range(fade_bottom_start, target_h):
-        progress = (gy - fade_bottom_start) / (target_h - fade_bottom_start)
-        alpha = int(255 * progress ** 0.4)
-        fade_draw.line([(0, gy), (target_w, gy)], fill=(0, 0, 0, alpha))
-
-    # Ultimi 5 pixel forzati a nero totale — elimina qualsiasi riga residua
-    fade_draw.rectangle([0, target_h - 5, target_w, target_h], fill=(0, 0, 0, 255))
-
     backdrop = Image.alpha_composite(backdrop, fade_overlay)
 
-    # Sfumatura sinistra morbida su 45% della larghezza (quella che funzionava)
-    fade_width = int(target_w * 0.45)
-    for gx in range(fade_width):
-        progress = gx / fade_width
-        alpha = int(255 * (1 - progress) ** 2.0)
-        fade_draw.line([(gx, 0), (gx, target_h)], fill=(0, 0, 0, alpha))
-
-    # Sfumatura inferiore — dal 70% in giù per eliminare la riga
-    fade_bottom_start = int(target_h * 0.70)
-    for gy in range(fade_bottom_start, target_h):
-        progress = (gy - fade_bottom_start) / (target_h - fade_bottom_start)
-        alpha = int(255 * progress ** 0.5)
-        fade_draw.line([(0, gy), (target_w, gy)], fill=(0, 0, 0, alpha))
-
-    backdrop = Image.alpha_composite(backdrop, fade_overlay)
-
-    # 5. Incolla backdrop in alto a destra
+    # 5. Incolla a destra
     pos_x = w - target_w
     img.paste(backdrop, (pos_x, 0), backdrop)
-
+    draw = ImageDraw.Draw(img)
+    
     # 6. Sfumatura sinistra sull'immagine INTERA per coprire anche la zona nera sotto
     full_overlay = Image.new('RGBA', (w, h), (0, 0, 0, 0))
     full_draw = ImageDraw.Draw(full_overlay)
