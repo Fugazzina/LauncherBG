@@ -200,15 +200,16 @@ def create_card(data):
     # Così copre sia la parte con immagine che la parte nera sotto
     full_overlay = Image.new('RGBA', (w, h), (0, 0, 0, 0))
     full_draw = ImageDraw.Draw(full_overlay)
-
+    
     solid_w = int(w * 0.22)
     full_draw.rectangle([0, 0, solid_w, h], fill=(0, 0, 0, 255))
 
-    gradient_end = int(w * 0.62)
+    gradient_end = int(w * 0.75)
     for gx in range(solid_w, gradient_end):
         progress = (gx - solid_w) / (gradient_end - solid_w)
-        alpha = int(255 * (1 - progress) ** 2.2)
+        alpha = int(255 * (1 - progress) ** 1.8)
         full_draw.line([(gx, 0), (gx, h)], fill=(0, 0, 0, alpha))
+   
 
     img = Image.alpha_composite(img, full_overlay)
     draw = ImageDraw.Draw(img)
