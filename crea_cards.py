@@ -166,35 +166,59 @@ def create_card(data):
 
     w, h = 1920, 1080
 
-    # 1. Scarica backdrop a piena risoluzione
+    # 1. Canvas nero
+    img = Image.new('RGBA', (w, h), (0, 0, 0, 255))
+
+    # 2. Scarica backdrop
     bg_url = f"https://image.tmdb.org/t/p/original{data['backdrop_path']}"
-    img = Image.open(requests.get(bg_url, stream=True).raw).convert("RGBA")
-    img = img.resize((w, h), Image.Resampling.LANCZOS)
+    backdrop = Image.open(requests.get(bg_url, stream=True).raw).convert("RGBA")
 
-    # 2. Overlay — solo gradiente da sinistra, nessuna zona nera in basso
-    overlay = Image.new('RGBA', (w, h), (0, 0, 0, 0))
-    draw_ov = ImageDraw.Draw(overlay)
+    # 3. Ridimensiona backdrop — altezza 75% dello schermo, allineato in alto
+    target_h = int(h * 0.75)
+    target_w = int(target_h * backdrop.width / backdrop.height)
 
-    # Zona nera solida (primi 20%)
-    solid_w = int(w * 0.20)
-    draw_ov.rectangle([0, 0, solid_w, h], fill=(0, 0, 0, 255))
+    # Se troppo stretto, allarga fino al bordo destro
+    if target_w < int(w * 0.55):
+        target_w = int(w * 0.55)
+        target_h = int(target_w * backdrop.height / backdrop.width)
 
-    # Gradiente morbido dal 20% al 65%
-    gradient_end = int(w * 0.65)
-    for gx in range(solid_w, gradient_end):
-        progress = (gx - solid_w) / (gradient_end - solid_w)
+    backdrop = backdrop.resize((target_w, target_h), Image.Resampling.LANCZOS)
+
+    # 4. Posizione: angolo in alto a DESTRA, tocca il bordo
+    pos_x = w - target_w  # nessun margine, arriva al bordo
+    pos_y = 0
+
+    # 5. Sfumatura MORBIDA sul lato sinistro del backdrop
+    fade_overlay = Image.new('RGBA', (target_w, target_h), (0, 0, 0, 0))
+    fade_draw = ImageDraw.Draw(fade_overlay)
+
+    # Sfumatura sinistra: dal nero totale al trasparente su 45% della larghezza
+    fade_width = int(target_w * 0.45)
+    for gx in range(fade_width):
+        progress = gx / fade_width
+        # Curva molto morbida (esponente basso = sfumatura graduale)
         alpha = int(255 * (1 - progress) ** 2.0)
-        draw_ov.line([(gx, 0), (gx, h)], fill=(0, 0, 0, alpha))
+        fade_draw.line([(gx, 0), (gx, target_h)], fill=(0, 0, 0, alpha))
 
-    img = Image.alpha_composite(img, overlay)
+    # Sfumatura basso: dal trasparente al nero su 40% dell'altezza
+    fade_bottom_start = int(target_h * 0.60)
+    for gy in range(fade_bottom_start, target_h):
+        progress = (gy - fade_bottom_start) / (target_h - fade_bottom_start)
+        alpha = int(255 * progress ** 0.9)
+        fade_draw.line([(0, gy), (target_w, gy)], fill=(0, 0, 0, alpha))
+
+    backdrop = Image.alpha_composite(backdrop, fade_overlay)
+
+    # 6. Incolla backdrop sul canvas nero
+    img.paste(backdrop, (pos_x, pos_y), backdrop)
     draw = ImageDraw.Draw(img)
 
-    # 3. Testo — colonna sinistra
+    # 7. Testo — colonna sinistra
     margin_left = 80
     text_max_width = int(w * 0.42)
     y = int(h * 0.08)
 
-    # 4. Logo PNG
+    # 8. Logo PNG film
     logos = []
     if data.get('images') and data['images'].get('logos'):
         all_logos = data['images']['logos']
@@ -228,7 +252,7 @@ def create_card(data):
         y += 90
         print(f"  → Titolo testuale usato")
 
-    # 5. Metadati
+    # 9. Metadati
     genres = " • ".join([g['name'] for g in data.get('genres', [])[:3]])
     runtime = data.get('runtime', 0)
     hours = runtime // 60
@@ -247,13 +271,13 @@ def create_card(data):
     draw.text((margin_left, y), meta_line, font=font_meta, fill=(200, 200, 200, 255))
     y += 48
 
-    # 6. Badge IMDb
+    # 10. Badge IMDb
     vote = data.get('vote_average', 0)
     if vote and vote > 0:
         draw_imdb_badge(draw, img, margin_left, y, vote)
         y += 60
 
-    # 7. Descrizione
+    # 11. Descrizione — testo pulito senza sfondo
     font_desc = get_font_montserrat(26, "regular")
     overview = data.get('overview', '')
     if overview:
@@ -265,7 +289,7 @@ def create_card(data):
             draw.text((margin_left, y), line, font=font_desc, fill=(190, 190, 190, 255))
             y += 36
 
-    # 8. Salva
+    # 12. Salva
     safe_title = "".join(c for c in data.get('title', 'film') if c.isalnum() or c in (' ', '_')).strip()
     safe_title = safe_title.replace(' ', '_')[:25]
     filename = f"{data['id']}_{safe_title}.jpg"
