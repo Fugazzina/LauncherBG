@@ -1,21 +1,33 @@
 [
   {
-    "location": "Predestination",
-    "title": "Predestination",
+    "location": "The Wire",
+    "title": "The Wire",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/206487_Predestination.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/1438_The_Wire.jpg"
   },
   {
-    "location": "Argo",
-    "title": "Argo",
+    "location": "Nurse Jackie  Terapia dur",
+    "title": "Nurse Jackie  Terapia dur",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/68734_Argo.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/18053_Nurse_Jackie__Terapia_dur.jpg"
   },
   {
-    "location": "Elementary",
-    "title": "Elementary",
+    "location": "Coherence  Oltre lo spazi",
+    "title": "Coherence  Oltre lo spazi",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/1415_Elementary.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/220289_Coherence__Oltre_lo_spazi.jpg"
+  },
+  {
+    "location": "The Founder",
+    "title": "The Founder",
+    "author": "TMDB",
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/310307_The_Founder.jpg"
+  },
+  {
+    "location": "Looper  In fuga dal passa",
+    "title": "Looper  In fuga dal passa",
+    "author": "TMDB",
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/59967_Looper__In_fuga_dal_passa.jpg"
   },
   {
     "location": "Atypical",
@@ -24,22 +36,10 @@
     "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/71578_Atypical.jpg"
   },
   {
-    "location": "Boston Legal",
-    "title": "Boston Legal",
+    "location": "Fullmetal Alchemist Broth",
+    "title": "Fullmetal Alchemist Broth",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/4598_Boston_Legal.jpg"
-  },
-  {
-    "location": "Vanilla Sky",
-    "title": "Vanilla Sky",
-    "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/1903_Vanilla_Sky.jpg"
-  },
-  {
-    "location": "NipTuck",
-    "title": "NipTuck",
-    "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/3750_NipTuck.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/31911_Fullmetal_Alchemist_Broth.jpg"
   },
   {
     "location": "Prometheus",
@@ -48,10 +48,10 @@
     "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/70981_Prometheus.jpg"
   },
   {
-    "location": "Code Black",
-    "title": "Code Black",
+    "location": "Fleabag",
+    "title": "Fleabag",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/63418_Code_Black.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/67070_Fleabag.jpg"
   },
   {
     "location": "Snowfall",
@@ -66,22 +66,28 @@
     "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/269149_Zootropolis.jpg"
   },
   {
-    "location": "Lie to Me",
-    "title": "Lie to Me",
+    "location": "Chicago Med",
+    "title": "Chicago Med",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/8358_Lie_to_Me.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/62650_Chicago_Med.jpg"
   },
   {
-    "location": "The Boondocks",
-    "title": "The Boondocks",
+    "location": "Piovono polpette",
+    "title": "Piovono polpette",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/2604_The_Boondocks.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/22794_Piovono_polpette.jpg"
   },
   {
-    "location": "Demon Slayer Kimetsu no Y",
-    "title": "Demon Slayer Kimetsu no Y",
+    "location": "American Dad",
+    "title": "American Dad",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/85937_Demon_Slayer_Kimetsu_no_Y.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/1433_American_Dad.jpg"
+  },
+  {
+    "location": "Bones",
+    "title": "Bones",
+    "author": "TMDB",
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/1911_Bones.jpg"
   },
   {
     "location": "42  La vera storia di una",
@@ -90,28 +96,22 @@
     "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/109410_42__La_vera_storia_di_una.jpg"
   },
   {
-    "location": "Top Boy",
-    "title": "Top Boy",
+    "location": "Moon",
+    "title": "Moon",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/41889_Top_Boy.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/17431_Moon.jpg"
   },
   {
-    "location": "Ralph Spaccatutto",
-    "title": "Ralph Spaccatutto",
+    "location": "Madagascar",
+    "title": "Madagascar",
     "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/82690_Ralph_Spaccatutto.jpg"
+    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/953_Madagascar.jpg"
   },
   {
     "location": "Million Dollar Arm",
     "title": "Million Dollar Arm",
     "author": "TMDB",
     "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/198185_Million_Dollar_Arm.jpg"
-  },
-  {
-    "location": "Alla ricerca di Nemo",
-    "title": "Alla ricerca di Nemo",
-    "author": "TMDB",
-    "url_img": "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/12_Alla_ricerca_di_Nemo.jpg"
   },
   {
     "location": "Coco",
