@@ -19,8 +19,9 @@ IMDB_LOGO_PATH = "/tmp/imdb_logo.png"
 def download_imdb_logo():
     if not os.path.exists(IMDB_LOGO_PATH):
         try:
-            url = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/IMDB_Logo_2016.svg/200px-IMDB_Logo_2016.svg.png"
-            r = requests.get(url)
+            # PNG ufficiale ad alta risoluzione da Wikimedia
+            url = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/IMDB_Logo_2016.svg/500px-IMDB_Logo_2016.svg.png"
+            r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
             with open(IMDB_LOGO_PATH, 'wb') as f:
                 f.write(r.content)
             print("Logo IMDb scaricato")
@@ -173,17 +174,23 @@ def create_card(data):
     bg_url = f"https://image.tmdb.org/t/p/original{data['backdrop_path']}"
     backdrop = Image.open(requests.get(bg_url, stream=True).raw).convert("RGBA")
 
-    # 3. Ridimensiona mantenendo proporzioni, altezza 60%
-    target_h = int(h * 0.60)
+# 3. Ridimensiona backdrop — PIU ALTO dello schermo così il bordo va fuori canvas
+    target_h = h + 100  # 100px oltre il bordo inferiore = nessuna riga visibile
     target_w = int(target_h * backdrop.width / backdrop.height)
     if target_w < int(w * 0.55):
         target_w = int(w * 0.55)
         target_h = int(target_w * backdrop.height / backdrop.width)
     backdrop = backdrop.resize((target_w, target_h), Image.Resampling.LANCZOS)
 
-    # 4. Sfumatura sul backdrop — bordo sinistro morbido + bordo inferiore
+    # 4. Sfumatura SOLO sul bordo sinistro del backdrop (quella che funzionava)
     fade_overlay = Image.new('RGBA', (target_w, target_h), (0, 0, 0, 0))
     fade_draw = ImageDraw.Draw(fade_overlay)
+    fade_width = int(target_w * 0.45)
+    for gx in range(fade_width):
+        progress = gx / fade_width
+        alpha = int(255 * (1 - progress) ** 2.0)
+        fade_draw.line([(gx, 0), (gx, target_h)], fill=(0, 0, 0, alpha))
+    backdrop = Image.alpha_composite(backdrop, fade_overlay)
 
     # Sfumatura sinistra morbida su 45% della larghezza (quella che funzionava)
     fade_width = int(target_w * 0.45)
