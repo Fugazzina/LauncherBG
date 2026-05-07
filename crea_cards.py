@@ -96,13 +96,19 @@ def wrap_text(text, font, max_width, draw):
     return lines
 
 def draw_imdb_badge(draw, x, y, score):
-    font_imdb = get_font_montserrat(22, "bold")
+    """Disegna il badge IMDb giallo stile Apple TV"""
+    font_badge = get_font_montserrat(20, "bold")
     font_score = get_font_montserrat(26, "bold")
-    badge_w, badge_h = 70, 34
+
+    # Badge giallo
+    badge_w, badge_h = 72, 34
     draw.rounded_rectangle([x, y, x + badge_w, y + badge_h], radius=5, fill=(245, 197, 24))
-    draw.text((x + 8, y + 6), "IMDb", font=font_imdb, fill=(0, 0, 0))
-    score_text = f"{score:.1f}"
-    draw.text((x + badge_w + 10, y + 4), score_text, font=font_score, fill=(255, 255, 255))
+    
+    # Testo IMDb centrato nel badge
+    draw.text((x + 7, y + 7), "IMDb", font=font_badge, fill=(0, 0, 0))
+
+    # Voto bianco accanto
+    draw.text((x + badge_w + 10, y + 4), f"{score:.1f}", font=font_score, fill=(255, 255, 255))
 
 def create_card(data):
     if not data.get('backdrop_path'):
@@ -112,29 +118,32 @@ def create_card(data):
         print(f"  → Film non trovato su TMDB, salto.")
         return
 
-    # 1. Scarica backdrop
-    bg_url = f"https://image.tmdb.org/t/p/original{data['backdrop_path']}"
-    img = Image.open(requests.get(bg_url, stream=True).raw).convert("RGBA")
-    img = img.resize((1920, 1080), Image.Resampling.LANCZOS)
-    w, h = 1920, 1080
-
-    # 2. Sfumatura sinistra
+    # 2. Sfumatura sinistra + basso stile Apple TV
     overlay = Image.new('RGBA', (w, h), (0, 0, 0, 0))
     draw_ov = ImageDraw.Draw(overlay)
-    solid_w = int(w * 0.20)
+    
+    # Zona nera solida a sinistra (primi 18%)
+    solid_w = int(w * 0.18)
     draw_ov.rectangle([0, 0, solid_w, h], fill=(0, 0, 0, 255))
+    
+    # Gradiente sinistra dal 18% al 58%
     gradient_start = solid_w
-    gradient_end = int(w * 0.60)
+    gradient_end = int(w * 0.58)
     for x in range(gradient_start, gradient_end):
         progress = (x - gradient_start) / (gradient_end - gradient_start)
         alpha = int(255 * (1 - progress) ** 1.5)
         draw_ov.line([(x, 0), (x, h)], fill=(0, 0, 0, alpha))
+
+    # Sfumatura basso (dal 55% al 100% dell'altezza)
+    # Rende leggibili le app nella parte inferiore
+    bottom_start = int(h * 0.55)
+    for y_pos in range(bottom_start, h):
+        progress = (y_pos - bottom_start) / (h - bottom_start)
+        alpha = int(200 * progress ** 1.2)
+        draw_ov.line([(0, y_pos), (w, y_pos)], fill=(0, 0, 0, alpha))
+
     img = Image.alpha_composite(img, overlay)
     draw = ImageDraw.Draw(img)
-
-    margin_left = 80
-    text_max_width = int(w * 0.42)
-    y = int(h * 0.13)
 
     # 3. Logo PNG
     logos = []
