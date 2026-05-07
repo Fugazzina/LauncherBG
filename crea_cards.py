@@ -129,18 +129,17 @@ def create_card(data):
     # Gradiente sinistra dal 18% al 58%
     gradient_start = solid_w
     gradient_end = int(w * 0.58)
-    for x in range(gradient_start, gradient_end):
-        progress = (x - gradient_start) / (gradient_end - gradient_start)
+    for gx in range(gradient_start, gradient_end):
+        progress = (gx - gradient_start) / (gradient_end - gradient_start)
         alpha = int(255 * (1 - progress) ** 1.5)
-        draw_ov.line([(x, 0), (x, h)], fill=(0, 0, 0, alpha))
+        draw_ov.line([(gx, 0), (gx, h)], fill=(0, 0, 0, alpha))
 
     # Sfumatura basso (dal 55% al 100% dell'altezza)
-    # Rende leggibili le app nella parte inferiore
     bottom_start = int(h * 0.55)
-    for y_pos in range(bottom_start, h):
-        progress = (y_pos - bottom_start) / (h - bottom_start)
+    for gy in range(bottom_start, h):
+        progress = (gy - bottom_start) / (h - bottom_start)
         alpha = int(200 * progress ** 1.2)
-        draw_ov.line([(0, y_pos), (w, y_pos)], fill=(0, 0, 0, alpha))
+        draw_ov.line([(0, gy), (w, gy)], fill=(0, 0, 0, alpha))
 
     img = Image.alpha_composite(img, overlay)
     draw = ImageDraw.Draw(img)
