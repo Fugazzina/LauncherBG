@@ -21,6 +21,9 @@ jobs:
       - name: Installa librerie
         run: pip install requests Pillow python-dotenv
 
+      - name: Pulisci cartella
+        run: rm -rf sfondi_projectivity/*.jpg || true
+
       - name: Esegui script
         env:
           TRAKT_ID: ${{ secrets.TRAKT_ID }}
