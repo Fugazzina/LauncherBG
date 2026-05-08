@@ -1,8 +1,10 @@
 import requests
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
+from io import BytesIO
 import os
 import json
 import random
+import textwrap
 
 # --- CONFIGURAZIONE ---
 TRAKT_ID = os.getenv('TRAKT_ID')
@@ -10,30 +12,34 @@ TMDB_KEY = os.getenv('TMDB_KEY')
 USER = os.getenv('TRAKT_USER')
 TRAKT_ACCESS_TOKEN = os.getenv('TRAKT_ACCESS_TOKEN')
 FOLDER = "./sfondi_projectivity/"
+TMDB_BASE_URL = "https://api.themoviedb.org/3/"
 
 if not os.path.exists(FOLDER):
     os.makedirs(FOLDER)
+
+tmdb_headers = {
+    "accept": "application/json",
+    "Authorization": f"Bearer {TMDB_KEY}"
+}
 
 IMDB_LOGO_PATH = "/tmp/imdb_logo.png"
 
 def download_imdb_logo():
     if not os.path.exists(IMDB_LOGO_PATH):
         try:
-            # PNG ufficiale ad alta risoluzione da Wikimedia
             url = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/IMDB_Logo_2016.svg/500px-IMDB_Logo_2016.svg.png"
             r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
             with open(IMDB_LOGO_PATH, 'wb') as f:
                 f.write(r.content)
             print("Logo IMDb scaricato")
         except Exception as e:
-            print(f"Errore download logo IMDb: {e}")
+            print(f"Errore logo IMDb: {e}")
 
 def download_fonts():
     os.makedirs("/tmp/fonts", exist_ok=True)
     fonts = {
-        "/tmp/fonts/Montserrat-Bold.ttf": "https://github.com/JulietaUla/Montserrat/raw/master/fonts/ttf/Montserrat-Bold.ttf",
-        "/tmp/fonts/Montserrat-Regular.ttf": "https://github.com/JulietaUla/Montserrat/raw/master/fonts/ttf/Montserrat-Regular.ttf",
-        "/tmp/fonts/Montserrat-Light.ttf": "https://github.com/JulietaUla/Montserrat/raw/master/fonts/ttf/Montserrat-Light.ttf",
+        "/tmp/fonts/Roboto-Light.ttf": "https://github.com/googlefonts/roboto/raw/main/src/hinted/Roboto-Light.ttf",
+        "/tmp/fonts/Roboto-Bold.ttf": "https://github.com/googlefonts/roboto/raw/main/src/hinted/Roboto-Bold.ttf",
     }
     for path, url in fonts.items():
         if not os.path.exists(path):
@@ -43,20 +49,15 @@ def download_fonts():
                     f.write(r.content)
                 print(f"Font scaricato: {path}")
             except Exception as e:
-                print(f"Errore download font: {e}")
+                print(f"Errore font: {e}")
 
-def get_font_montserrat(size, style="regular"):
-    paths = {
-        "bold": "/tmp/fonts/Montserrat-Bold.ttf",
-        "regular": "/tmp/fonts/Montserrat-Regular.ttf",
-        "light": "/tmp/fonts/Montserrat-Light.ttf",
-    }
+def get_font(size, bold=False):
+    path = "/tmp/fonts/Roboto-Bold.ttf" if bold else "/tmp/fonts/Roboto-Light.ttf"
     fallbacks = [
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     ]
     try:
-        return ImageFont.truetype(paths.get(style, paths["regular"]), size)
+        return ImageFont.truetype(path, size)
     except:
         for f in fallbacks:
             try:
@@ -65,241 +66,187 @@ def get_font_montserrat(size, style="regular"):
                 continue
     return ImageFont.load_default()
 
-def get_trakt_movies():
-    """Recupera film E serie raccomandate da Trakt"""
-    all_items = []
+def resize_image(image, height):
+    ratio = height / image.height
+    width = int(image.width * ratio)
+    return image.resize((width, height), Image.Resampling.LANCZOS)
 
-    # Film raccomandati
-    url_movies = "https://api.trakt.tv/recommendations/movies?limit=50"
+def resize_logo(image, width, height):
+    aspect_ratio = image.width / image.height
+    new_width = width
+    new_height = int(new_width / aspect_ratio)
+    if new_height > height:
+        new_height = height
+        new_width = int(new_height * aspect_ratio)
+    return image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+def get_trakt_items():
+    all_items = []
     headers = {
         'Content-Type': 'application/json',
         'trakt-api-version': '2',
         'trakt-api-key': TRAKT_ID,
         'Authorization': f'Bearer {TRAKT_ACCESS_TOKEN}'
     }
-    r = requests.get(url_movies, headers=headers)
-    print(f"Trakt film status: {r.status_code}")
+    # Film
+    r = requests.get("https://api.trakt.tv/recommendations/movies?limit=50", headers=headers)
+    print(f"Trakt film: {r.status_code}")
     if r.status_code == 200:
         for item in r.json():
             tmdb_id = item.get('ids', {}).get('tmdb')
             if tmdb_id:
                 all_items.append({'tmdb_id': tmdb_id, 'type': 'movie', 'title': item.get('title', '')})
-
-    # Serie raccomandate
-    url_shows = "https://api.trakt.tv/recommendations/shows?limit=50"
-    r2 = requests.get(url_shows, headers=headers)
-    print(f"Trakt serie status: {r2.status_code}")
+    # Serie
+    r2 = requests.get("https://api.trakt.tv/recommendations/shows?limit=50", headers=headers)
+    print(f"Trakt serie: {r2.status_code}")
     if r2.status_code == 200:
         for item in r2.json():
             tmdb_id = item.get('ids', {}).get('tmdb')
             if tmdb_id:
                 all_items.append({'tmdb_id': tmdb_id, 'type': 'show', 'title': item.get('title', '')})
-
-    # Mescola casualmente e prendi 20
     random.shuffle(all_items)
-    print(f"Totale disponibili: {len(all_items)}, selezionati: {min(20, len(all_items))}")
+    print(f"Totale: {len(all_items)}, selezionati: {min(20, len(all_items))}")
     return all_items[:20]
 
 def get_tmdb_data(tmdb_id, media_type='movie'):
     if media_type == 'show':
-        url = f"https://api.themoviedb.org/3/tv/{tmdb_id}?api_key={TMDB_KEY}&language=it-IT"
-        data = requests.get(url).json()
+        url = f"{TMDB_BASE_URL}tv/{tmdb_id}?language=it-IT"
+        data = requests.get(url, headers=tmdb_headers).json()
         if not data.get('overview'):
-            url_en = f"https://api.themoviedb.org/3/tv/{tmdb_id}?api_key={TMDB_KEY}&language=en-US"
-            data = requests.get(url_en).json()
-        # Normalizza i campi per le serie
-        data['title'] = data.get('name', data.get('title', ''))
+            data = requests.get(f"{TMDB_BASE_URL}tv/{tmdb_id}?language=en-US", headers=tmdb_headers).json()
+        data['title'] = data.get('name', '')
         data['release_date'] = data.get('first_air_date', '')
         data['runtime'] = data.get('episode_run_time', [0])[0] if data.get('episode_run_time') else 0
-        img_url = f"https://api.themoviedb.org/3/tv/{tmdb_id}/images?api_key={TMDB_KEY}"
+        img_url = f"{TMDB_BASE_URL}tv/{tmdb_id}/images?language=it,en,null"
     else:
-        url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_KEY}&language=it-IT"
-        data = requests.get(url).json()
+        url = f"{TMDB_BASE_URL}movie/{tmdb_id}?language=it-IT"
+        data = requests.get(url, headers=tmdb_headers).json()
         if not data.get('overview'):
-            url_en = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_KEY}&language=en-US"
-            data = requests.get(url_en).json()
-        img_url = f"https://api.themoviedb.org/3/movie/{tmdb_id}/images?api_key={TMDB_KEY}"
-
-    img_data = requests.get(img_url).json()
+            data = requests.get(f"{TMDB_BASE_URL}movie/{tmdb_id}?language=en-US", headers=tmdb_headers).json()
+        img_url = f"{TMDB_BASE_URL}movie/{tmdb_id}/images?language=it,en,null"
+    img_data = requests.get(img_url, headers=tmdb_headers).json()
     data['images'] = img_data
     logos = img_data.get('logos', [])
-    print(f"  → Loghi trovati: {len(logos)} (PNG: {len([l for l in logos if l.get('file_path','').endswith('.png')])})")
+    print(f"  → Loghi: {len([l for l in logos if l.get('file_path','').endswith('.png')])} PNG")
     return data
 
-def wrap_text(text, font, max_width, draw):
-    words = text.split()
-    lines = []
-    current_line = ""
-    for word in words:
-        test = f"{current_line} {word}".strip()
-        bbox = draw.textbbox((0, 0), test, font=font)
-        if bbox[2] <= max_width:
-            current_line = test
-        else:
-            if current_line:
-                lines.append(current_line)
-            current_line = word
-    if current_line:
-        lines.append(current_line)
-    return lines
+def get_logo(data):
+    logos = data.get('images', {}).get('logos', [])
+    png_logos = [l for l in logos if l.get('file_path', '').endswith('.png')]
+    if not png_logos:
+        png_logos = logos
+    for lang in ['it', 'en', '']:
+        candidates = [l for l in png_logos if l.get('iso_639_1', '') == lang]
+        if candidates:
+            return sorted(candidates, key=lambda x: x.get('vote_average', 0), reverse=True)[0]['file_path']
+    if png_logos:
+        return sorted(png_logos, key=lambda x: x.get('vote_average', 0), reverse=True)[0]['file_path']
+    return None
 
-def draw_imdb_badge(draw, img, x, y, score):
-    font_score = get_font_montserrat(30, "bold")
+def draw_imdb_badge(bckg, draw, x, y, score):
+    font_score = get_font(55, bold=True)
     try:
         imdb_logo = Image.open(IMDB_LOGO_PATH).convert("RGBA")
-        imdb_logo.thumbnail((90, 45), Image.Resampling.LANCZOS)
-        img.paste(imdb_logo, (x, y), imdb_logo)
-        draw.text((x + 100, y + 5), f"{score:.1f}", font=font_score, fill=(255, 255, 255))
+        imdb_logo.thumbnail((110, 55), Image.Resampling.LANCZOS)
+        bckg.paste(imdb_logo, (x, y), imdb_logo)
+        draw.text((x + 120, y + 8), f"{score:.1f}", font=font_score, fill="white")
     except:
-        font_badge = get_font_montserrat(20, "bold")
-        badge_w, badge_h = 72, 34
-        draw.rounded_rectangle([x, y, x + badge_w, y + badge_h], radius=5, fill=(245, 197, 24))
-        draw.text((x + 7, y + 7), "IMDb", font=font_badge, fill=(0, 0, 0))
-        draw.text((x + badge_w + 10, y + 4), f"{score:.1f}", font=font_score, fill=(255, 255, 255))
+        font_badge = get_font(40, bold=True)
+        draw.rounded_rectangle([x, y, x + 100, y + 50], radius=6, fill=(245, 197, 24))
+        draw.text((x + 10, y + 8), "IMDb", font=font_badge, fill=(0, 0, 0))
+        draw.text((x + 115, y + 5), f"{score:.1f}", font=font_score, fill="white")
 
 def create_card(data):
     if not data.get('backdrop_path'):
-        print(f"  → Nessun backdrop per '{data.get('title', 'N/A')}', salto.")
+        print(f"  → Nessun backdrop, salto.")
         return
     if data.get('success') == False:
-        print(f"  → Film non trovato su TMDB, salto.")
+        print(f"  → Film non trovato, salto.")
         return
 
-    w, h = 1920, 1080
+    # Carica bckg.png e overlay.png dal repository
+    bckg = Image.open("bckg.png").convert("RGBA")
+    overlay = Image.open("overlay.png").convert("RGBA")
 
-    # 1. Canvas nero
-    img = Image.new('RGBA', (w, h), (0, 0, 0, 255))
-
-    # 2. Scarica backdrop
+    # Scarica backdrop e ridimensiona a 1500px di altezza
+    # 1500 > 1080 = il bordo inferiore va SEMPRE fuori canvas = nessuna riga!
     bg_url = f"https://image.tmdb.org/t/p/original{data['backdrop_path']}"
-    backdrop = Image.open(requests.get(bg_url, stream=True).raw).convert("RGBA")
+    image_response = requests.get(bg_url)
+    if image_response.status_code != 200:
+        print(f"  → Errore download backdrop")
+        return
+    show_image = Image.open(BytesIO(image_response.content)).convert("RGBA")
+    show_image = resize_image(show_image, 1500)
 
-    # 3. Crop + resize: prende la parte destra del backdrop, altezza PIENA schermo
-    orig_w, orig_h = backdrop.size
-    
-    # Taglia il 35% sinistro del backdrop (tanto sarebbe coperto dal testo)
-    crop_x = int(orig_w * 0.35)
-    backdrop = backdrop.crop((crop_x, 0, orig_w, orig_h))
-    
-    # Ridimensiona a 65% larghezza × 100% altezza — nessun bordo inferiore possibile
-    target_w = int(w * 0.65)
-    target_h = h  # Esattamente 1080px = canvas height = ZERO righe visibili
-    backdrop = backdrop.resize((target_w, target_h), Image.Resampling.LANCZOS)
+    # Incolla backdrop a destra
+    bckg.paste(show_image, (bckg.width - show_image.width, 0))
 
-    # 4. Solo sfumatura SINISTRA sul backdrop (basso non serve, arriva fino in fondo)
-    fade_overlay = Image.new('RGBA', (target_w, target_h), (0, 0, 0, 0))
-    fade_draw = ImageDraw.Draw(fade_overlay)
-    fade_width = int(target_w * 0.45)
-    for gx in range(fade_width):
-        progress = gx / fade_width
-        alpha = int(255 * (1 - progress) ** 2.0)
-        fade_draw.line([(gx, 0), (gx, target_h)], fill=(0, 0, 0, alpha))
-    backdrop = Image.alpha_composite(backdrop, fade_overlay)
+    draw = ImageDraw.Draw(bckg)
 
-    # 5. Incolla a destra
-    pos_x = w - target_w
-    img.paste(backdrop, (pos_x, 0), backdrop)
-    draw = ImageDraw.Draw(img)
-    
-    # 6. Sfumatura sinistra su TUTTA l'immagine finale
-    full_overlay = Image.new('RGBA', (w, h), (0, 0, 0, 0))
-    full_draw = ImageDraw.Draw(full_overlay)
+    # Font
+    font_info = get_font(50)
+    font_overview = get_font(50)
+    font_title = get_font(190)
 
-    # Zona nera solida fino a pos_x (larghezza testo)
-    full_draw.rectangle([0, 0, pos_x, h], fill=(0, 0, 0, 255))
+    # Posizioni (stesse del progetto originale)
+    info_position = (210, 650)
+    overview_position = (210, 730)
+    shadow_offset = 2
+    shadow_color = "black"
+    metadata_color = (150, 150, 150)
 
-    # Gradiente morbido da pos_x fino al 65% della larghezza totale
-    gradient_end = int(w * 0.65)
-    for gx in range(pos_x, gradient_end):
-        progress = (gx - pos_x) / (gradient_end - pos_x)
-        alpha = int(255 * (1 - progress) ** 2.0)
-        full_draw.line([(gx, 0), (gx, h)], fill=(0, 0, 0, alpha))
+    # Incolla overlay (gradiente precostruito)
+    bckg.paste(overlay, (bckg.width - overlay.width, 0), overlay)
 
-    img = Image.alpha_composite(img, full_overlay)
-    draw = ImageDraw.Draw(img)
- 
-    # 7. Testo
-    margin_left = 80
-    text_max_width = int(w * 0.42)
-    y = int(h * 0.08)
-
-    # 8. Logo PNG
-    logos = []
-    if data.get('images') and data['images'].get('logos'):
-        all_logos = data['images']['logos']
-        png_logos = [l for l in all_logos if l.get('file_path', '').endswith('.png')]
-        if not png_logos:
-            png_logos = all_logos
-        for lang in ['it', 'en', '']:
-            candidates = [l for l in png_logos if l.get('iso_639_1', '') == lang]
-            if candidates:
-                logos = sorted(candidates, key=lambda x: x.get('vote_average', 0), reverse=True)
-                break
-        if not logos:
-            logos = sorted(png_logos, key=lambda x: x.get('vote_average', 0), reverse=True)
-
-    logo_placed = False
-    if logos:
-        logo_url = f"https://image.tmdb.org/t/p/w500{logos[0]['file_path']}"
+    # Logo
+    logo_path = get_logo(data)
+    if logo_path:
+        logo_url = f"https://image.tmdb.org/t/p/original{logo_path}"
+        logo_response = requests.get(logo_url)
         try:
-            logo = Image.open(requests.get(logo_url, stream=True).raw).convert("RGBA")
-            logo.thumbnail((520, 200), Image.Resampling.LANCZOS)
-            img.paste(logo, (margin_left, y), logo)
-            y += logo.height + 25
-            logo_placed = True
-            print(f"  → Logo PNG usato")
-        except Exception as e:
-            print(f"  → Errore logo: {e}")
-
-    if not logo_placed:
-        font_title = get_font_montserrat(80, "bold")
-        draw.text((margin_left, y), data.get('title', ''), font=font_title, fill=(255, 255, 255, 255))
-        y += 90
+            if logo_response.status_code == 200:
+                logo_image = Image.open(BytesIO(logo_response.content)).convert("RGBA")
+                logo_image = resize_logo(logo_image, 1000, 500)
+                logo_position = (210, info_position[1] - logo_image.height - 25)
+                bckg.paste(logo_image, logo_position, logo_image)
+                print(f"  → Logo PNG usato")
+            else:
+                draw.text((210, 420), data.get('title', ''), fill="white", font=font_title)
+        except UnidentifiedImageError:
+            draw.text((210, 420), data.get('title', ''), fill="white", font=font_title)
+    else:
+        draw.text((210, 420), data.get('title', ''), fill="white", font=font_title)
         print(f"  → Titolo testuale usato")
 
-    # 9. Metadati
-    genres = " • ".join([g['name'] for g in data.get('genres', [])[:3]])
-    runtime = data.get('runtime', 0)
-    hours = runtime // 60
-    minutes = runtime % 60
-    duration = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+    # Metadati
+    genres = ", ".join([g['name'] for g in data.get('genres', [])[:3]])
     year = data.get('release_date', '')[:4]
-    meta_parts = []
-    if genres:
-        meta_parts.append(genres)
-    if duration and runtime:
-        meta_parts.append(duration)
-    if year:
-        meta_parts.append(year)
-    meta_line = "  •  ".join(meta_parts)
-    font_meta = get_font_montserrat(28, "light")
-    draw.text((margin_left, y), meta_line, font=font_meta, fill=(200, 200, 200, 255))
-    y += 48
-
-    # 10. Badge IMDb
+    runtime = data.get('runtime', 0)
     vote = data.get('vote_average', 0)
-    if vote and vote > 0:
-        draw_imdb_badge(draw, img, margin_left, y, vote)
-        y += 60
+    hours, minutes = divmod(runtime, 60)
+    duration = f"{hours}h{minutes}min" if hours > 0 else f"{minutes}min"
+    info = f"{genres}  •  {year}  •  {duration}"
 
-    # 11. Descrizione
-    font_desc = get_font_montserrat(26, "regular")
+    draw.text((info_position[0] + shadow_offset, info_position[1] + shadow_offset), info, font=font_info, fill=shadow_color)
+    draw.text(info_position, info, font=font_info, fill=metadata_color)
+
+    # IMDb badge
+    if vote and vote > 0:
+        draw_imdb_badge(bckg, draw, 210, info_position[1] + 60, vote)
+
+    # Descrizione
     overview = data.get('overview', '')
     if overview:
-        if len(overview) > 300:
-            overview = overview[:297] + "..."
-        lines = wrap_text(overview, font_desc, text_max_width, draw)
-        y += 8
-        for line in lines[:4]:
-            draw.text((margin_left, y), line, font=font_desc, fill=(190, 190, 190, 255))
-            y += 36
+        wrapped = "\n".join(textwrap.wrap(overview, width=65, max_lines=2, placeholder=" ..."))
+        ov_pos = (210, info_position[1] + 130)
+        draw.text((ov_pos[0] + shadow_offset, ov_pos[1] + shadow_offset), wrapped, font=font_overview, fill=shadow_color)
+        draw.text(ov_pos, wrapped, font=font_overview, fill="white")
 
-    # 12. Salva
+    # Salva
     safe_title = "".join(c for c in data.get('title', 'film') if c.isalnum() or c in (' ', '_')).strip()
-    safe_title = safe_title.replace(' ', '_')[:25]
-    filename = f"{data['id']}_{safe_title}.jpg"
+    filename = f"{data['id']}_{safe_title.replace(' ', '_')[:25]}.jpg"
     save_path = os.path.join(FOLDER, filename)
-    img.convert("RGB").save(save_path, quality=95)
+    bckg.convert("RGB").save(save_path, quality=95)
     print(f"  ✓ Salvata: {filename}")
 
 def clear_old_images():
@@ -312,53 +259,40 @@ def clear_old_images():
 
 def generate_index():
     base_url = "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/"
-    index_path = os.path.join(FOLDER, "index.txt")
     files = [f for f in os.listdir(FOLDER) if f.endswith('.jpg')]
-    with open(index_path, 'w') as f:
+    with open(os.path.join(FOLDER, "index.txt"), 'w') as f:
         for filename in files:
             f.write(f"{base_url}{filename}\n")
-    print(f"Index generato con {len(files)} immagini")
+    print(f"Index: {len(files)} immagini")
 
 def generate_json():
     base_url = "https://raw.githubusercontent.com/Fugazzina/LauncherBG/main/sfondi_projectivity/"
-    json_path = os.path.join(FOLDER, "wallpapers.json")
     files = [f for f in os.listdir(FOLDER) if f.endswith('.jpg')]
-    wallpapers = []
-    for filename in files:
-        title = filename.replace('.jpg', '').split('_', 1)[-1].replace('_', ' ')
-        wallpapers.append({
-            "location": title,
-            "title": title,
-            "author": "TMDB",
-            "url_img": f"{base_url}{filename}"
-        })
-    with open(json_path, 'w') as f:
+    wallpapers = [{"location": f.replace('.jpg',''), "title": f.replace('.jpg',''), "author": "TMDB", "url_img": f"{base_url}{f}"} for f in files]
+    with open(os.path.join(FOLDER, "wallpapers.json"), 'w') as f:
         json.dump(wallpapers, f, indent=2)
-    print(f"JSON generato con {len(wallpapers)} immagini")
+    print(f"JSON: {len(wallpapers)} immagini")
 
 # --- ESECUZIONE ---
-print("=== Avvio generazione cards ===")
+print("=== Avvio ===")
 download_fonts()
 download_imdb_logo()
 clear_old_images()
 
-items = get_trakt_movies()
-print(f"Elementi da elaborare: {len(items)}")
+items = get_trakt_items()
+print(f"Elementi: {len(items)}")
 
 count = 0
 for item in items:
     try:
-        title = item['title']
-        tmdb_id = item['tmdb_id']
-        media_type = item['type']
-        print(f"\nElaborazione: {title} (TMDB: {tmdb_id}, tipo: {media_type})")
-        details = get_tmdb_data(tmdb_id, media_type)
+        print(f"\nElaborazione: {item['title']} ({item['type']})")
+        details = get_tmdb_data(item['tmdb_id'], item['type'])
         create_card(details)
         count += 1
     except Exception as e:
-        print(f"  ✗ Errore su '{title}': {e}")
+        print(f"  ✗ Errore: {e}")
         continue
 
 generate_index()
 generate_json()
-print(f"\n=== Completato: {count} cards generate ===")
+print(f"\n=== Completato: {count} cards ===")
