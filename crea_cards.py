@@ -20,7 +20,7 @@ if not os.path.exists(FOLDER):
 
 tmdb_headers = {
     "accept": "application/json",
-    "Authorization": f"Bearer {TMDB_KEY}"
+    "Authorization": f"Bearer {TMDB_BEARER_TOKEN}"  # ← CORRETTO
 }
 
 IMDB_LOGO_PATH = "/tmp/imdb_logo.png"
