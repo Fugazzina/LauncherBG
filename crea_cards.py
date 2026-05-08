@@ -201,7 +201,7 @@ def create_card(data):
     vote = data.get('vote_average', 0)
     hours, minutes = divmod(runtime, 60)
     duration = f"{hours}h{minutes}min" if hours > 0 else f"{minutes}min"
-imdb_str = f"  •  IMDb {vote:.1f}" if vote and vote > 0 else ""
+    imdb_str = f"  •  IMDb {vote:.1f}" if vote and vote > 0 else ""
     info = f"{genres}  •  {year}  •  {duration}{imdb_str}"
 
     draw.text((info_position[0] + shadow_offset, info_position[1] + shadow_offset), info, font=font_info, fill=shadow_color)
