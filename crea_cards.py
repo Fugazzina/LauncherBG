@@ -149,9 +149,17 @@ def draw_imdb_badge(bckg, draw, x, y, score):
     try:
         imdb_logo = Image.open(IMDB_LOGO_PATH).convert("RGBA")
         imdb_logo.thumbnail((90, 45), Image.Resampling.LANCZOS)
-        logo_y = y + (55 - imdb_logo.height) // 2 + 5  # centra verticalmente
+        
+        # Calcola l'altezza del testo del voto
+        bbox = draw.textbbox((0, 0), f"{score:.1f}", font=font_score)
+        text_height = bbox[3] - bbox[1]
+        
+        # Allinea logo e testo al centro verticalmente
+        logo_y = y + (text_height - imdb_logo.height) // 2
+        text_y = y
+        
         bckg.paste(imdb_logo, (x, logo_y), imdb_logo)
-        draw.text((x + imdb_logo.width + 15, y), f"{score:.1f}", font=font_score, fill="white")
+        draw.text((x + imdb_logo.width + 15, text_y), f"{score:.1f}", font=font_score, fill="white")
     except:
         font_badge = get_font(40, bold=True)
         draw.rounded_rectangle([x, y, x + 100, y + 50], radius=6, fill=(245, 197, 24))
