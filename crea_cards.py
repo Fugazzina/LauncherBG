@@ -23,18 +23,6 @@ tmdb_headers = {
     "Authorization": f"Bearer {TMDB_BEARER_TOKEN}"  # ← CORRETTO
 }
 
-IMDB_LOGO_PATH = "/tmp/imdb_logo.png"
-
-def download_imdb_logo():
-    if not os.path.exists(IMDB_LOGO_PATH):
-        try:
-            url = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/IMDB_Logo_2016.svg/500px-IMDB_Logo_2016.svg.png"
-            r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with open(IMDB_LOGO_PATH, 'wb') as f:
-                f.write(r.content)
-            print("Logo IMDb scaricato")
-        except Exception as e:
-            print(f"Errore logo IMDb: {e}")
 
 def download_fonts():
     os.makedirs("/tmp/fonts", exist_ok=True)
@@ -145,26 +133,16 @@ def get_logo(data):
     return None
 
 def draw_imdb_badge(bckg, draw, x, y, score):
-    font_score = get_font(55, bold=True)
-    try:
-        imdb_logo = Image.open(IMDB_LOGO_PATH).convert("RGBA")
-        imdb_logo.thumbnail((90, 45), Image.Resampling.LANCZOS)
-        
-        # Calcola l'altezza del testo del voto
-        bbox = draw.textbbox((0, 0), f"{score:.1f}", font=font_score)
-        text_height = bbox[3] - bbox[1]
-        
-        # Allinea logo e testo al centro verticalmente
-        logo_y = y + (text_height - imdb_logo.height) // 2
-        text_y = y
-        
-        bckg.paste(imdb_logo, (x, logo_y), imdb_logo)
-        draw.text((x + imdb_logo.width + 15, text_y), f"{score:.1f}", font=font_score, fill="white")
-    except:
-        font_badge = get_font(40, bold=True)
-        draw.rounded_rectangle([x, y, x + 100, y + 50], radius=6, fill=(245, 197, 24))
-        draw.text((x + 10, y + 8), "IMDb", font=font_badge, fill=(0, 0, 0))
-        draw.text((x + 115, y + 5), f"{score:.1f}", font=font_score, fill="white")
+    font_imdb = get_font(50, bold=True)
+    font_score = get_font(50, bold=False)
+    
+    # Badge giallo con scritta IMDb
+    badge_w, badge_h = 110, 50
+    draw.rounded_rectangle([x, y, x + badge_w, y + badge_h], radius=6, fill=(245, 197, 24))
+    draw.text((x + 10, y + 5), "IMDb", font=font_imdb, fill=(0, 0, 0))
+    
+    # Voto bianco allineato verticalmente al badge
+    draw.text((x + badge_w + 15, y + 5), f"{score:.1f}", font=font_score, fill="white")
 
 def create_card(data):
     if not data.get('backdrop_path'):
@@ -294,7 +272,6 @@ def generate_json():
 # --- ESECUZIONE ---
 print("=== Avvio ===")
 download_fonts()
-download_imdb_logo()
 clear_old_images()
 
 items = get_trakt_items()
