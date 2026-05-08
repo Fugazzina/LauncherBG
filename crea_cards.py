@@ -134,15 +134,7 @@ def get_logo(data):
 
 def draw_imdb_badge(bckg, draw, x, y, score):
     font_imdb = get_font(50, bold=True)
-    font_score = get_font(50, bold=False)
-    
-    # Badge giallo con scritta IMDb
-    badge_w, badge_h = 110, 50
-    draw.rounded_rectangle([x, y, x + badge_w, y + badge_h], radius=6, fill=(245, 197, 24))
-    draw.text((x + 10, y + 5), "IMDb", font=font_imdb, fill=(0, 0, 0))
-    
-    # Voto bianco allineato verticalmente al badge
-    draw.text((x + badge_w + 15, y + 5), f"{score:.1f}", font=font_score, fill="white")
+    draw.text((x, y), f"IMDb  {score:.1f}", font=font_imdb, fill="white")
 
 def create_card(data):
     if not data.get('backdrop_path'):
