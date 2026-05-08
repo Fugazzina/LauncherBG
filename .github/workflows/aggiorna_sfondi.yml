@@ -19,7 +19,7 @@ jobs:
           python-version: '3.12'
 
       - name: Installa librerie
-        run: pip install requests Pillow
+        run: pip install requests Pillow python-dotenv
 
       - name: Esegui script
         env:
