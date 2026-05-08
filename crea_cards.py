@@ -201,14 +201,17 @@ def create_card(data):
     img.paste(backdrop, (pos_x, 0), backdrop)
     draw = ImageDraw.Draw(img)
     
-    # 6. Sfumatura sinistra sull'immagine INTERA per coprire anche la zona nera sotto
+    # 6. Sfumatura sinistra su TUTTA l'immagine finale
     full_overlay = Image.new('RGBA', (w, h), (0, 0, 0, 0))
     full_draw = ImageDraw.Draw(full_overlay)
 
-    # Stessa larghezza proporzionale al canvas completo
-    full_fade_width = pos_x + int(target_w * 0.45)
-    for gx in range(full_fade_width):
-        progress = gx / full_fade_width
+    # Zona nera solida fino a pos_x (larghezza testo)
+    full_draw.rectangle([0, 0, pos_x, h], fill=(0, 0, 0, 255))
+
+    # Gradiente morbido da pos_x fino al 65% della larghezza totale
+    gradient_end = int(w * 0.65)
+    for gx in range(pos_x, gradient_end):
+        progress = (gx - pos_x) / (gradient_end - pos_x)
         alpha = int(255 * (1 - progress) ** 2.0)
         full_draw.line([(gx, 0), (gx, h)], fill=(0, 0, 0, alpha))
 
