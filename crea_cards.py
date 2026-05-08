@@ -132,10 +132,6 @@ def get_logo(data):
         return sorted(png_logos, key=lambda x: x.get('vote_average', 0), reverse=True)[0]['file_path']
     return None
 
-def draw_imdb_badge(bckg, draw, x, y, score):
-    font_imdb = get_font(50, bold=True)
-    draw.text((x, y), f"IMDb  {score:.1f}", font=font_imdb, fill="white")
-
 def create_card(data):
     if not data.get('backdrop_path'):
         print(f"  → Nessun backdrop, salto.")
@@ -205,14 +201,11 @@ def create_card(data):
     vote = data.get('vote_average', 0)
     hours, minutes = divmod(runtime, 60)
     duration = f"{hours}h{minutes}min" if hours > 0 else f"{minutes}min"
-    info = f"{genres}  •  {year}  •  {duration}"
+imdb_str = f"  •  IMDb {vote:.1f}" if vote and vote > 0 else ""
+    info = f"{genres}  •  {year}  •  {duration}{imdb_str}"
 
     draw.text((info_position[0] + shadow_offset, info_position[1] + shadow_offset), info, font=font_info, fill=shadow_color)
     draw.text(info_position, info, font=font_info, fill=metadata_color)
-
-    # IMDb badge
-    if vote and vote > 0:
-        draw_imdb_badge(bckg, draw, 210, info_position[1] + 60, vote)
 
     # Descrizione
     overview = data.get('overview', '')
