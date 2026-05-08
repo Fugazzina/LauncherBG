@@ -149,7 +149,7 @@ def draw_imdb_badge(bckg, draw, x, y, score):
     try:
         imdb_logo = Image.open(IMDB_LOGO_PATH).convert("RGBA")
         imdb_logo.thumbnail((90, 45), Image.Resampling.LANCZOS)
-        logo_y = y + (55 - imdb_logo.height) // 2  # centra verticalmente
+        logo_y = y + (55 - imdb_logo.height) // 2 + 5  # centra verticalmente
         bckg.paste(imdb_logo, (x, logo_y), imdb_logo)
         draw.text((x + imdb_logo.width + 15, y), f"{score:.1f}", font=font_score, fill="white")
     except:
@@ -239,7 +239,15 @@ def create_card(data):
     # Descrizione
     overview = data.get('overview', '')
     if overview:
-        wrapped = "\n".join(textwrap.wrap(overview, width=65, max_lines=4, placeholder=" ..."))
+        lines = textwrap.wrap(overview, width=65, max_lines=4, placeholder=" ...")
+        # Rimuovi "..." se il testo finisce già con un segno di punteggiatura
+        if lines:
+            last_line = lines[-1]
+            if last_line.endswith(" ...") and len(" ".join(lines)) >= len(overview.strip()):
+                lines[-1] = last_line[:-4]  # rimuovi " ..."
+            elif last_line.endswith(".") or last_line.endswith("!") or last_line.endswith("?"):
+                pass  # già concluso, non toccare
+        wrapped = "\n".join(lines)
         ov_pos = (210, info_position[1] + 130)
         draw.text((ov_pos[0] + shadow_offset, ov_pos[1] + shadow_offset), wrapped, font=font_overview, fill=shadow_color)
         draw.text(ov_pos, wrapped, font=font_overview, fill="white")
