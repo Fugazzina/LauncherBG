@@ -27,6 +27,7 @@ jobs:
           TMDB_KEY: ${{ secrets.TMDB_KEY }}
           TRAKT_USER: ${{ secrets.TRAKT_USER }}
           TRAKT_ACCESS_TOKEN: ${{ secrets.TRAKT_ACCESS_TOKEN }}
+          MDB_BEARER_TOKEN: ${{ secrets.TMDB_BEARER_TOKEN }}
         run: python crea_cards.py
 
       - name: Salva immagini nel repository
