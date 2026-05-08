@@ -13,6 +13,7 @@ USER = os.getenv('TRAKT_USER')
 TRAKT_ACCESS_TOKEN = os.getenv('TRAKT_ACCESS_TOKEN')
 FOLDER = "./sfondi_projectivity/"
 TMDB_BASE_URL = "https://api.themoviedb.org/3/"
+TMDB_BEARER_TOKEN = os.getenv('TMDB_BEARER_TOKEN')
 
 if not os.path.exists(FOLDER):
     os.makedirs(FOLDER)
