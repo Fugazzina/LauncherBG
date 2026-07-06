@@ -132,7 +132,7 @@ def get_logo(data):
         return sorted(png_logos, key=lambda x: x.get('vote_average', 0), reverse=True)[0]['file_path']
     return None
 
-def create_card(data):
+def create_card(data, item_type='movie'):
     if not data.get('backdrop_path'):
         print(f"  → Nessun backdrop, salto.")
         return
@@ -199,8 +199,13 @@ def create_card(data):
     year = data.get('release_date', '')[:4]
     runtime = data.get('runtime', 0)
     vote = data.get('vote_average', 0)
-    hours, minutes = divmod(runtime, 60)
-    duration = f"{hours}h{minutes}min" if hours > 0 else f"{minutes}min"
+    if item_type == 'show':
+        seasons = data.get('number_of_seasons', 0)
+        episodes = data.get('number_of_episodes', 0)
+        duration = f"{seasons} stagioni  •  {episodes} episodi" if seasons > 0 else ""
+    else:
+        hours, minutes = divmod(runtime, 60)
+        duration = f"{hours}h{minutes}min" if hours > 0 else f"{minutes}min"
     imdb_str = f"  •  IMDb {vote:.1f}" if vote and vote > 0 else ""
     info = f"{genres}  •  {year}  •  {duration}{imdb_str}"
 
@@ -267,7 +272,7 @@ for item in items:
     try:
         print(f"\nElaborazione: {item['title']} ({item['type']})")
         details = get_tmdb_data(item['tmdb_id'], item['type'])
-        create_card(details)
+        create_card(details, item['type'])
         count += 1
     except Exception as e:
         print(f"  ✗ Errore: {e}")
