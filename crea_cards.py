@@ -229,25 +229,43 @@ def generate_json():
     print(f"JSON: {len(wallpapers)} immagini")
 
 # --- ESECUZIONE ---
-print("=== Avvio ===")
-download_fonts()
+if __name__ == "__main__":
+    print("=== Avvio ===")
+    download_fonts()
 
-from mdblist_gemini import get_personalized_items
-items = get_personalized_items()
-print(f"Elementi: {len(items)}")
-clear_old_images()
+    from mdblist_gemini import get_personalized_items
 
-count = 0
-for item in items:
-    try:
-        print(f"\nElaborazione: {item['title']} ({item['type']})")
-        details = get_tmdb_data(item['tmdb_id'], item['type'])
-        create_card(details, item['type'])
-        count += 1
-    except Exception as e:
-        print(f"  ✗ Errore: {e}")
-        continue
+    items = get_personalized_items()
+    print(f"Elementi: {len(items)}")
 
-generate_index()
-generate_json()
-print(f"\n=== Completato: {count} cards ===")
+    # Keep all existing wallpapers untouched while rendering new ones.
+    original_folder = FOLDER
+    with tempfile.TemporaryDirectory(prefix="launcherbg_wallpapers_") as staging_dir:
+        FOLDER = staging_dir
+        for item in items:
+            try:
+                print(f"\\nElaborazione: {item['title']} ({item['type']})")
+                details = get_tmdb_data(item['tmdb_id'], item['type'])
+                create_card(details, item['type'])
+            except Exception as exc:
+                print(f"  ✗ Errore: {exc}")
+                continue
+
+        generated = [name for name in os.listdir(FOLDER) if name.endswith(".jpg")]
+        minimum = min(10, len(items))
+        if len(generated) < minimum:
+            raise RuntimeError(
+                f"Generati solo {len(generated)} sfondi su {len(items)}: "
+                "mantengo intatti gli sfondi precedenti"
+            )
+
+        generate_index()
+        generate_json()
+        FOLDER = original_folder
+        clear_old_images()
+        for filename in os.listdir(staging_dir):
+            shutil.move(
+                os.path.join(staging_dir, filename),
+                os.path.join(FOLDER, filename),
+            )
+        print(f"\\n=== Completato: {len(generated)} cards ===")
