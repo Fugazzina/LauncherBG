@@ -7,10 +7,7 @@ import random
 import textwrap
 
 # --- CONFIGURAZIONE ---
-TRAKT_ID = os.getenv('TRAKT_ID')
 TMDB_KEY = os.getenv('TMDB_KEY')
-USER = os.getenv('TRAKT_USER')
-TRAKT_ACCESS_TOKEN = os.getenv('TRAKT_ACCESS_TOKEN')
 FOLDER = "./sfondi_projectivity/"
 TMDB_BASE_URL = "https://api.themoviedb.org/3/"
 TMDB_BEARER_TOKEN = os.getenv('TMDB_BEARER_TOKEN')
@@ -68,34 +65,6 @@ def resize_logo(image, width, height):
         new_height = height
         new_width = int(new_height * aspect_ratio)
     return image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-
-def get_trakt_items():
-    all_items = []
-    headers = {
-        'Content-Type': 'application/json',
-        'trakt-api-version': '2',
-        'trakt-api-key': TRAKT_ID,
-        'Authorization': f'Bearer {TRAKT_ACCESS_TOKEN}'
-    }
-    # Film
-    r = requests.get("https://api.trakt.tv/recommendations/movies?limit=50", headers=headers)
-    print(f"Trakt film: {r.status_code}")
-    if r.status_code == 200:
-        for item in r.json():
-            tmdb_id = item.get('ids', {}).get('tmdb')
-            if tmdb_id:
-                all_items.append({'tmdb_id': tmdb_id, 'type': 'movie', 'title': item.get('title', '')})
-    # Serie
-    r2 = requests.get("https://api.trakt.tv/recommendations/shows?limit=50", headers=headers)
-    print(f"Trakt serie: {r2.status_code}")
-    if r2.status_code == 200:
-        for item in r2.json():
-            tmdb_id = item.get('ids', {}).get('tmdb')
-            if tmdb_id:
-                all_items.append({'tmdb_id': tmdb_id, 'type': 'show', 'title': item.get('title', '')})
-    random.shuffle(all_items)
-    print(f"Totale: {len(all_items)}, selezionati: {min(20, len(all_items))}")
-    return all_items[:20]
 
 def get_tmdb_data(tmdb_id, media_type='movie'):
     if media_type == 'show':
@@ -264,8 +233,10 @@ print("=== Avvio ===")
 download_fonts()
 clear_old_images()
 
-items = get_trakt_items()
+from mdblist_gemini import get_personalized_items
+items = get_personalized_items()
 print(f"Elementi: {len(items)}")
+clear_old_images()
 
 count = 0
 for item in items:
