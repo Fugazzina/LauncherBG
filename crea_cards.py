@@ -5,12 +5,11 @@ import os
 import json
 import random
 import textwrap
+import shutil
+import tempfile
 
 # --- CONFIGURAZIONE ---
-TRAKT_ID = os.getenv('TRAKT_ID')
 TMDB_KEY = os.getenv('TMDB_KEY')
-USER = os.getenv('TRAKT_USER')
-TRAKT_ACCESS_TOKEN = os.getenv('TRAKT_ACCESS_TOKEN')
 FOLDER = "./sfondi_projectivity/"
 TMDB_BASE_URL = "https://api.themoviedb.org/3/"
 TMDB_BEARER_TOKEN = os.getenv('TMDB_BEARER_TOKEN')
@@ -68,34 +67,6 @@ def resize_logo(image, width, height):
         new_height = height
         new_width = int(new_height * aspect_ratio)
     return image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-
-def get_trakt_items():
-    all_items = []
-    headers = {
-        'Content-Type': 'application/json',
-        'trakt-api-version': '2',
-        'trakt-api-key': TRAKT_ID,
-        'Authorization': f'Bearer {TRAKT_ACCESS_TOKEN}'
-    }
-    # Film
-    r = requests.get("https://api.trakt.tv/recommendations/movies?limit=50", headers=headers)
-    print(f"Trakt film: {r.status_code}")
-    if r.status_code == 200:
-        for item in r.json():
-            tmdb_id = item.get('ids', {}).get('tmdb')
-            if tmdb_id:
-                all_items.append({'tmdb_id': tmdb_id, 'type': 'movie', 'title': item.get('title', '')})
-    # Serie
-    r2 = requests.get("https://api.trakt.tv/recommendations/shows?limit=50", headers=headers)
-    print(f"Trakt serie: {r2.status_code}")
-    if r2.status_code == 200:
-        for item in r2.json():
-            tmdb_id = item.get('ids', {}).get('tmdb')
-            if tmdb_id:
-                all_items.append({'tmdb_id': tmdb_id, 'type': 'show', 'title': item.get('title', '')})
-    random.shuffle(all_items)
-    print(f"Totale: {len(all_items)}, selezionati: {min(20, len(all_items))}")
-    return all_items[:20]
 
 def get_tmdb_data(tmdb_id, media_type='movie'):
     if media_type == 'show':
@@ -260,24 +231,43 @@ def generate_json():
     print(f"JSON: {len(wallpapers)} immagini")
 
 # --- ESECUZIONE ---
-print("=== Avvio ===")
-download_fonts()
-clear_old_images()
+if __name__ == "__main__":
+    print("=== Avvio ===")
+    download_fonts()
 
-items = get_trakt_items()
-print(f"Elementi: {len(items)}")
+    from mdblist_gemini import get_personalized_items
 
-count = 0
-for item in items:
-    try:
-        print(f"\nElaborazione: {item['title']} ({item['type']})")
-        details = get_tmdb_data(item['tmdb_id'], item['type'])
-        create_card(details, item['type'])
-        count += 1
-    except Exception as e:
-        print(f"  ✗ Errore: {e}")
-        continue
+    items = get_personalized_items()
+    print(f"Elementi: {len(items)}")
 
-generate_index()
-generate_json()
-print(f"\n=== Completato: {count} cards ===")
+    # Keep all existing wallpapers untouched while rendering new ones.
+    original_folder = FOLDER
+    with tempfile.TemporaryDirectory(prefix="launcherbg_wallpapers_") as staging_dir:
+        FOLDER = staging_dir
+        for item in items:
+            try:
+                print(f"\nElaborazione: {item['title']} ({item['type']})")
+                details = get_tmdb_data(item['tmdb_id'], item['type'])
+                create_card(details, item['type'])
+            except Exception as exc:
+                print(f"  ✗ Errore: {exc}")
+                continue
+
+        generated = [name for name in os.listdir(FOLDER) if name.endswith(".jpg")]
+        minimum = min(10, len(items))
+        if len(generated) < minimum:
+            raise RuntimeError(
+                f"Generati solo {len(generated)} sfondi su {len(items)}: "
+                "mantengo intatti gli sfondi precedenti"
+            )
+
+        generate_index()
+        generate_json()
+        FOLDER = original_folder
+        clear_old_images()
+        for filename in os.listdir(staging_dir):
+            shutil.move(
+                os.path.join(staging_dir, filename),
+                os.path.join(FOLDER, filename),
+            )
+        print(f"\n=== Completato: {len(generated)} cards ===")

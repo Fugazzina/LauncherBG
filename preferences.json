@@ -1,0 +1,44 @@
+{
+  "favorite_genres": [
+    "Fantascienza",
+    "Thriller",
+    "Mistero",
+    "Azione",
+    "Crime",
+    "Animazione",
+    "Avventura"
+  ],
+  "favorite_titles": [
+    "Interstellar",
+    "Dark",
+    "Breaking Bad",
+    "Peaky Blinders",
+    "Dr. House",
+    "Blade Runner",
+    "Dune",
+    "Ghost in the Shell",
+    "I Origins",
+    "Moneyball",
+    "The Social Network",
+    "Se7en",
+    "Zodiac",
+    "The Others",
+    "Prisoners",
+    "Fight Club",
+    "Juno",
+    "Sherlock Holmes",
+    "From",
+    "Jujutsu Kaisen",
+    "Naruto",
+    "Arrival",
+    "Contact"
+  ],
+  "avoid": [
+    "Commedie romantiche",
+    "Film lenti",
+    "Film biografici",
+    "Documentari",
+    "Musical"
+  ],
+  "recommendation_style": "Equilibrio tra familiarità e scoperte"
+}
