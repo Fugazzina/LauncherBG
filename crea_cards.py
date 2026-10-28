@@ -231,7 +231,6 @@ def generate_json():
 # --- ESECUZIONE ---
 print("=== Avvio ===")
 download_fonts()
-clear_old_images()
 
 from mdblist_gemini import get_personalized_items
 items = get_personalized_items()
