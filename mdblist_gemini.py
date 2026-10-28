@@ -130,7 +130,8 @@ def get_history():
 def ask_gemini(history):
     preferences = json.loads(PREFERENCES.read_text(encoding="utf-8"))
     prompt = (
-        "Sei un esperto di consigli cinematografici. Proponi 65 film e serie TV reali, "
+        "Sei un esperto di consigli cinematografici. Proponi 65 titoli reali: "
+        "35 film e 30 serie TV (anime compresi), distribuiti tra i generi preferiti. "
         "con un equilibrio tra titoli conosciuti e scoperte e includendo anime. "
         "Le preferenze esplicite pesano più della watch history: visto non significa apprezzato. "
         "Non riproporre i preferiti indicati e non proporre titoli presenti nella cronologia. "
@@ -164,10 +165,14 @@ def resolve_titles(suggestions, watched):
     headers = {"Authorization": "Bearer " + os.environ["TMDB_BEARER_TOKEN"],
                "accept": "application/json"}
     chosen, unique = [], set()
+    limits = {"movie": 30, "show": 20}
+    selected_counts = {"movie": 0, "show": 0}
     for candidate in suggestions:
         kind = candidate.get("type")
         title = str(candidate.get("title", "")).strip()
         if kind not in ("movie", "show") or not title:
+            continue
+        if selected_counts[kind] >= limits[kind]:
             continue
         target = "movie" if kind == "movie" else "tv"
         try:
@@ -193,10 +198,12 @@ def resolve_titles(suggestions, watched):
         if identity in watched or identity in unique or not match.get("backdrop_path"):
             continue
         unique.add(identity)
+        selected_counts[kind] += 1
         chosen.append({"tmdb_id": identity[1], "type": kind,
                        "title": match.get(name_key) or title})
         if len(chosen) >= 50:
             break
+    print(f"[Gemini] Titoli validati: {len(chosen)}; film={selected_counts['movie']}; serie={selected_counts['show']}")
     return chosen
 
 
@@ -215,13 +222,13 @@ def get_personalized_items():
     # Older recommendation caches were produced from only the first history page.
     is_expired = (updated is None or
                   datetime.now(timezone.utc) - updated > timedelta(days=7)
-                  or (cache or {}).get("history_version") != 2)
+                  or (cache or {}).get("history_version") != 3)
     if is_expired:
         try:
             items = resolve_titles(ask_gemini(history), watched)
             if len(items) < 10:
                 raise ValueError(f"Solo {len(items)} raccomandazioni valide")
-            cache = {"updated_at": datetime.now(timezone.utc).isoformat(), "history_version": 2, "items": items}
+            cache = {"updated_at": datetime.now(timezone.utc).isoformat(), "history_version": 3, "items": items}
             CACHE.write_text(json.dumps(cache, indent=2, ensure_ascii=False), encoding="utf-8")
         except Exception as exc:
             if not cache:
