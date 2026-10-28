@@ -5,6 +5,8 @@ import os
 import json
 import random
 import textwrap
+import shutil
+import tempfile
 
 # --- CONFIGURAZIONE ---
 TMDB_KEY = os.getenv('TMDB_KEY')
