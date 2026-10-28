@@ -1,0 +1,255 @@
+{
+  "updated_at": "2026-10-28T21:48:09.192858+00:00",
+  "items": [
+    {
+      "tmdb_id": 27205,
+      "type": "movie",
+      "title": "Inception"
+    },
+    {
+      "tmdb_id": 59967,
+      "type": "movie",
+      "title": "Looper"
+    },
+    {
+      "tmdb_id": 180,
+      "type": "movie",
+      "title": "Minority Report"
+    },
+    {
+      "tmdb_id": 137113,
+      "type": "movie",
+      "title": "Edge of Tomorrow"
+    },
+    {
+      "tmdb_id": 45612,
+      "type": "movie",
+      "title": "Source Code"
+    },
+    {
+      "tmdb_id": 264660,
+      "type": "movie",
+      "title": "Ex Machina"
+    },
+    {
+      "tmdb_id": 17654,
+      "type": "movie",
+      "title": "District 9"
+    },
+    {
+      "tmdb_id": 9693,
+      "type": "movie",
+      "title": "Children of Men"
+    },
+    {
+      "tmdb_id": 782,
+      "type": "movie",
+      "title": "Gattaca"
+    },
+    {
+      "tmdb_id": 76341,
+      "type": "movie",
+      "title": "Mad Max: Fury Road"
+    },
+    {
+      "tmdb_id": 110415,
+      "type": "movie",
+      "title": "Snowpiercer"
+    },
+    {
+      "tmdb_id": 670,
+      "type": "movie",
+      "title": "Oldboy"
+    },
+    {
+      "tmdb_id": 11423,
+      "type": "movie",
+      "title": "Memories of Murder"
+    },
+    {
+      "tmdb_id": 496243,
+      "type": "movie",
+      "title": "Parasite"
+    },
+    {
+      "tmdb_id": 274,
+      "type": "movie",
+      "title": "The Silence of the Lambs"
+    },
+    {
+      "tmdb_id": 273481,
+      "type": "movie",
+      "title": "Sicario"
+    },
+    {
+      "tmdb_id": 6977,
+      "type": "movie",
+      "title": "No Country for Old Men"
+    },
+    {
+      "tmdb_id": 64690,
+      "type": "movie",
+      "title": "Drive"
+    },
+    {
+      "tmdb_id": 949,
+      "type": "movie",
+      "title": "Heat"
+    },
+    {
+      "tmdb_id": 1538,
+      "type": "movie",
+      "title": "Collateral"
+    },
+    {
+      "tmdb_id": 46738,
+      "type": "movie",
+      "title": "Incendies"
+    },
+    {
+      "tmdb_id": 411088,
+      "type": "movie",
+      "title": "The Invisible Guest"
+    },
+    {
+      "tmdb_id": 546554,
+      "type": "movie",
+      "title": "Knives Out"
+    },
+    {
+      "tmdb_id": 210577,
+      "type": "movie",
+      "title": "Gone Girl"
+    },
+    {
+      "tmdb_id": 77,
+      "type": "movie",
+      "title": "Memento"
+    },
+    {
+      "tmdb_id": 11324,
+      "type": "movie",
+      "title": "Shutter Island"
+    },
+    {
+      "tmdb_id": 629,
+      "type": "movie",
+      "title": "The Usual Suspects"
+    },
+    {
+      "tmdb_id": 129,
+      "type": "movie",
+      "title": "Spirited Away"
+    },
+    {
+      "tmdb_id": 128,
+      "type": "movie",
+      "title": "Princess Mononoke"
+    },
+    {
+      "tmdb_id": 149,
+      "type": "movie",
+      "title": "Akira"
+    },
+    {
+      "tmdb_id": 4977,
+      "type": "movie",
+      "title": "Paprika"
+    },
+    {
+      "tmdb_id": 10494,
+      "type": "movie",
+      "title": "Perfect Blue"
+    },
+    {
+      "tmdb_id": 67744,
+      "type": "show",
+      "title": "MINDHUNTER"
+    },
+    {
+      "tmdb_id": 69740,
+      "type": "show",
+      "title": "Ozark"
+    },
+    {
+      "tmdb_id": 95396,
+      "type": "show",
+      "title": "Severance"
+    },
+    {
+      "tmdb_id": 62560,
+      "type": "show",
+      "title": "Mr. Robot"
+    },
+    {
+      "tmdb_id": 68421,
+      "type": "show",
+      "title": "Altered Carbon"
+    },
+    {
+      "tmdb_id": 63247,
+      "type": "show",
+      "title": "Westworld"
+    },
+    {
+      "tmdb_id": 63639,
+      "type": "show",
+      "title": "The Expanse"
+    },
+    {
+      "tmdb_id": 1972,
+      "type": "show",
+      "title": "Battlestar Galactica"
+    },
+    {
+      "tmdb_id": 1705,
+      "type": "show",
+      "title": "Fringe"
+    },
+    {
+      "tmdb_id": 81349,
+      "type": "show",
+      "title": "Devs"
+    },
+    {
+      "tmdb_id": 63646,
+      "type": "show",
+      "title": "Counterpart"
+    },
+    {
+      "tmdb_id": 125988,
+      "type": "show",
+      "title": "Silo"
+    },
+    {
+      "tmdb_id": 93740,
+      "type": "show",
+      "title": "Foundation"
+    },
+    {
+      "tmdb_id": 62017,
+      "type": "show",
+      "title": "The Man in the High Castle"
+    },
+    {
+      "tmdb_id": 46511,
+      "type": "show",
+      "title": "Utopia"
+    },
+    {
+      "tmdb_id": 40008,
+      "type": "show",
+      "title": "Hannibal"
+    },
+    {
+      "tmdb_id": 46648,
+      "type": "show",
+      "title": "True Detective"
+    },
+    {
+      "tmdb_id": 1438,
+      "type": "show",
+      "title": "The Wire"
+    }
+  ]
+}
