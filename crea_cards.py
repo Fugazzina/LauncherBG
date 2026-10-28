@@ -244,7 +244,7 @@ if __name__ == "__main__":
         FOLDER = staging_dir
         for item in items:
             try:
-                print(f"\\nElaborazione: {item['title']} ({item['type']})")
+                print(f"\nElaborazione: {item['title']} ({item['type']})")
                 details = get_tmdb_data(item['tmdb_id'], item['type'])
                 create_card(details, item['type'])
             except Exception as exc:
@@ -268,4 +268,4 @@ if __name__ == "__main__":
                 os.path.join(staging_dir, filename),
                 os.path.join(FOLDER, filename),
             )
-        print(f"\\n=== Completato: {len(generated)} cards ===")
+        print(f"\n=== Completato: {len(generated)} cards ===")
