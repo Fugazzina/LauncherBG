@@ -68,7 +68,7 @@ def ask_gemini(history):
         "properties": {"items": {"type": "array", "items": {"type": "object",
             "properties": {"title": {"type": "string"}, "year": {"type": "integer"},
                            "type": {"type": "string", "enum": ["movie", "show"]}},
-            "required": ["title", "year", "type"]}}}},
+            "required": ["title", "year", "type"]}}},
         "required": ["items"],
     }
     response = requests.post(
