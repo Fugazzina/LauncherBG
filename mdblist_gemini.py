@@ -23,6 +23,17 @@ def get_history():
     response = api_json("https://api.mdblist.com/sync/watched", params={"apikey": key})
     if not isinstance(response, dict):
         raise ValueError("Formato MDBList inatteso: atteso oggetto movies/shows")
+    print("[MDBList API] campi principali:", sorted(response.keys()))
+    for section in ("movies", "shows"):
+        entries = response.get(section)
+        if isinstance(entries, list) and entries:
+            sample = entries[0]
+            fields = sorted(sample.keys()) if isinstance(sample, dict) else []
+            print(f"[MDBList API] {section}: {len(entries)} elementi; campi: {fields}")
+    for field in ("pagination", "page", "total", "limit", "offset", "next", "next_cursor", "has_more"):
+        if field in response:
+            print(f"[MDBList API] {field}: {response[field]}")
+
     watched, history = set(), []
     counters = {"movies": 0, "shows": 0, "missing_tmdb": 0}
     for section, kind in (("movies", "movie"), ("shows", "show")):
