@@ -24,10 +24,12 @@ def get_history():
     if not isinstance(response, dict):
         raise ValueError("Formato MDBList inatteso: atteso oggetto movies/shows")
     watched, history = set(), []
+    counters = {"movies": 0, "shows": 0, "missing_tmdb": 0}
     for section, kind in (("movies", "movie"), ("shows", "show")):
         entries = response.get(section, [])
         if not isinstance(entries, list):
             raise ValueError(f"MDBList: {section} non è una lista")
+        counters[section] = len(entries)
         for entry in entries:
             if not isinstance(entry, dict):
                 continue
@@ -38,6 +40,7 @@ def get_history():
             try:
                 tmdb_id = int(ids.get("tmdb") or media.get("tmdb_id"))
             except (TypeError, ValueError):
+                counters["missing_tmdb"] += 1
                 continue
             watched.add((kind, tmdb_id))
             history.append({
@@ -45,6 +48,8 @@ def get_history():
                 "year": media.get("year"), "type": kind,
                 "last_watched": entry.get("last_watched_at"),
             })
+    print(f"[MDBList diagnostica] ricevuti: {counters['movies']} film, {counters['shows']} serie; "
+          f"senza ID TMDB: {counters['missing_tmdb']}; utilizzabili: {len(watched)}")
     if not watched:
         raise ValueError("Nessun TMDB ID nella Watch History MDBList; controllare la risposta dell'API")
     history.sort(key=lambda x: x["last_watched"] or "", reverse=True)
@@ -149,8 +154,12 @@ def get_personalized_items():
             if not cache:
                 raise
             print(f"Gemini non disponibile; uso cache: {exc}")
+    excluded = [x for x in cache["items"]
+                if (x["type"], int(x["tmdb_id"])) in watched]
     items = [x for x in cache["items"]
              if (x["type"], int(x["tmdb_id"])) not in watched]
+    print(f"[MDBList diagnostica] raccomandazioni in cache: {len(cache['items'])}; "
+          f"escluse perche viste: {len(excluded)}; rimanenti: {len(items)}")
     if not items:
         raise ValueError("Nessuna raccomandazione disponibile: sfondi esistenti preservati")
     random.shuffle(items)
