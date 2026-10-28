@@ -21,8 +21,8 @@ jobs:
       - name: Installa librerie
         run: pip install requests Pillow python-dotenv
 
-      - name: Pulisci cartella
-        run: echo "Pulizia demandata allo script dopo aver letto i consigli"
+      - name: Verifica sintassi Python
+        run: python -m py_compile crea_cards.py mdblist_gemini.py
 
       - name: Esegui script
         env:
