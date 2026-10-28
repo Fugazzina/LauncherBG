@@ -132,7 +132,7 @@ def ask_gemini(history):
     prompt = (
         "Sei un esperto di consigli cinematografici. Proponi 65 titoli reali: "
         "35 film e 30 serie TV (anime compresi), distribuiti tra i generi preferiti. "
-        "con un equilibrio tra titoli conosciuti e scoperte e includendo anime. "
+        "Mantieni un equilibrio tra titoli conosciuti e scoperte. "
         "Le preferenze esplicite pesano più della watch history: visto non significa apprezzato. "
         "Non riproporre i preferiti indicati e non proporre titoli presenti nella cronologia. "
         "Evita commedie romantiche, documentari, musical, biopic e opere deliberatamente lente. "
